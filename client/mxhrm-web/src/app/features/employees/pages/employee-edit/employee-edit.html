@@ -1,0 +1,109 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Edit Employee</h1>
+
+  <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+    Back
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="alert alert-info">Loading...</div>
+}
+
+@if (errorMessage()) {
+  <div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (!loading()) {
+  <div class="card">
+    <div class="card-body">
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Company ID</label>
+            <input class="form-control" type="text" [value]="companyID" disabled />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Employee ID</label>
+            <input class="form-control" type="text" [value]="employeeID" disabled />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            <input class="form-control" type="text" formControlName="firstName" />
+            @if (hasError('firstName')) {
+              <div class="text-danger small">First name is required.</div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            <input class="form-control" type="text" formControlName="lastName" />
+            @if (hasError('lastName')) {
+              <div class="text-danger small">Last name is required.</div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" formControlName="email" />
+            @if (hasError('email')) {
+              <div class="text-danger small">Valid email is required.</div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Hire Date</label>
+            <input class="form-control" type="date" formControlName="hireDate" />
+            @if (hasError('hireDate')) {
+              <div class="text-danger small">Hire date is required.</div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Salary</label>
+            <input class="form-control" type="number" formControlName="salary" />
+            @if (hasError('salary')) {
+              <div class="text-danger small">Salary must be 0 or more.</div>
+            }
+          </div>
+
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check">
+              <input
+                id="isActive"
+                class="form-check-input"
+                type="checkbox"
+                formControlName="isActive"
+              />
+              <label class="form-check-label" for="isActive">
+                Active
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Modified By</label>
+            <input class="form-control" type="text" formControlName="modifiedBy" />
+            @if (hasError('modifiedBy')) {
+              <div class="text-danger small">Modified by is required.</div>
+            }
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

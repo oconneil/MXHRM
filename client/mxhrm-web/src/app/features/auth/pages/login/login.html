@@ -1,0 +1,29 @@
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Login</h1>
+
+        @if (errorMessage()) {
+          <div class="alert alert-danger">{{ errorMessage() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="login()">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" type="text" formControlName="userName" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input class="form-control" type="password" formControlName="password" />
+          </div>
+
+          <button class="btn btn-primary w-100" type="submit" [disabled]="loading()">
+            {{ loading() ? 'Logging in...' : 'Login' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

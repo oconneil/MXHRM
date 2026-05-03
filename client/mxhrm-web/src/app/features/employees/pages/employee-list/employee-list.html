@@ -1,0 +1,121 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Employees</h1>
+
+  <a class="btn btn-primary" routerLink="/employees/create">
+    Create Employee
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search employee..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        (keyup.enter)="onSearch()"
+      />
+
+      <button class="btn btn-outline-primary" type="button" (click)="onSearch()">
+        Search
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="alert alert-info">Loading...</div>
+}
+
+@if (errorMessage()) {
+  <div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (!loading() && employees().length === 0) {
+  <div class="alert alert-warning">No employees found.</div>
+}
+
+@if (employees().length > 0) {
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Employee ID</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Hire Date</th>
+            <th class="text-end">Salary</th>
+            <th>Active</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (employee of employees(); track employee.employeeID) {
+            <tr>
+              <td>{{ employee.employeeID }}</td>
+              <td>{{ employee.fullName }}</td>
+              <td>{{ employee.email }}</td>
+              <td>{{ employee.hireDate | date: 'dd/MM/yyyy' }}</td>
+              <td class="text-end">{{ employee.salary | number: '1.2-2' }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.bg-success]="employee.isActive"
+                  [class.bg-secondary]="!employee.isActive"
+                >
+                  {{ employee.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <a
+                  class="btn btn-sm btn-outline-primary me-2"
+                  [routerLink]="['/employees/edit', employee.companyID, employee.employeeID]"
+                >
+                  Edit
+                </a>
+
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="deleteEmployee(employee.companyID, employee.employeeID)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <span>Total: {{ totalItems() }}</span>
+
+      <div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary me-2"
+          (click)="previousPage()"
+          [disabled]="page() <= 1"
+        >
+          Previous
+        </button>
+
+        <span>Page {{ page() }} / {{ totalPages() }}</span>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary ms-2"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+}
