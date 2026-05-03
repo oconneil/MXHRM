@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+*.nupkg
+*.snupkg
+
+# Logs
+*.log
+logs/
+
+# Local secrets/config overrides
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# Angular / Node
+client/mxhrm-web/node_modules/
+client/mxhrm-web/dist/
+client/mxhrm-web/.angular/
+client/mxhrm-web/coverage/
+client/mxhrm-web/.cache/
+client/mxhrm-web/.eslintcache
+
+# Local runtime data
+seq-data/Logs/
+

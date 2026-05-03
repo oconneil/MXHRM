@@ -1,0 +1,6 @@
+@MXHRM.Api_HostAddress = http://localhost:5090
+
+GET {{MXHRM.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
