@@ -79,4 +79,12 @@ export class AuthService {
       return null;
     }
   }
+
+  hasRole(role: string): boolean {
+    return this.currentUser()?.roles?.includes(role) ?? false;
+  }
+
+  hasAnyRole(roles: string[]): boolean {
+    return roles.some(role => this.hasRole(role));
+  }
 }

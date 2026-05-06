@@ -8,6 +8,7 @@ using MXHRM.Api.Models;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using MXHRM.Api.Data;
+using MXHRM.Api.Authorization;
 
 namespace MXHRM.Api.Services.Auth;
 
@@ -49,6 +50,9 @@ public class AuthService : IAuthService
             var errors = string.Join(", ", result.Errors.Select(x => x.Description));
             throw new InvalidOperationException(errors);
         }
+
+        // Add role assignment logic here if needed (e.g., assign "Employee" role by default)
+        await _userManager.AddToRoleAsync(user, "Employee");   // role "Admin" on test only, should be role "Employee"
 
         return await GenerateAuthResponseAsync(user);
     }
@@ -112,12 +116,26 @@ public class AuthService : IAuthService
         var expiresAt = DateTime.UtcNow.AddMinutes(accessTokenMinutes);
 
         var claims = new List<Claim>
-    {
-        new(JwtRegisteredClaimNames.Sub, user.Id),
-        new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
-        new("company_id", user.CompanyID),
-        new("display_name", user.DisplayName)
-    };
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+            new("company_id", user.CompanyID),
+            new("display_name", user.DisplayName)
+        };
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var permissions = await GetPermissionsByRolesAsync(roles);
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        foreach (var permission in permissions)
+        {
+            claims.Add(new Claim(PermissionAuthorizationHandler.PermissionClaimType, permission));
+        }
+
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
@@ -154,7 +172,8 @@ public class AuthService : IAuthService
             ExpiresAt = expiresAt,
             UserName = user.UserName ?? string.Empty,
             DisplayName = user.DisplayName,
-            CompanyID = user.CompanyID
+            CompanyID = user.CompanyID,
+            Roles = roles.ToList()
         };
     }
 
@@ -167,5 +186,21 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(randomBytes);
     }
 
+    private async Task<IReadOnlyCollection<string>> GetPermissionsByRolesAsync(IEnumerable<string> roles)
+    {
+        var roleNames = roles.ToList();
+
+        if (roleNames.Count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return await _db.RolePermissions
+            .AsNoTracking()
+            .Where(x => roleNames.Contains(x.Role.Name!))
+            .Select(x => x.Permission.Code)
+            .Distinct()
+            .ToListAsync();
+    }
 
 }

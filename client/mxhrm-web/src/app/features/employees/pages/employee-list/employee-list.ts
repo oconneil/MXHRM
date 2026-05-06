@@ -1,9 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmployeeResponse, PagedResponse } from '../../models/employee';
 import { EmployeeService } from '../../services/employee';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth';
 
 @Component({
   selector: 'app-employee-list',
@@ -21,6 +22,8 @@ export class EmployeeList implements OnInit {
   totalItems = signal(0);
   totalPages = signal(0);
   search = signal('');
+
+  readonly authService = inject(AuthService);
 
   constructor(private readonly employeeService: EmployeeService) { }
 

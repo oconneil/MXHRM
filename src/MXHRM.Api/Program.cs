@@ -14,6 +14,9 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using MXHRM.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -119,6 +122,27 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+// Register the custom authorization handler for permissions
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.EmployeeRead,
+        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Read)));
+
+    options.AddPolicy(Policies.EmployeeCreate,
+        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Create)));
+
+    options.AddPolicy(Policies.EmployeeUpdate,
+        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Update)));
+
+    options.AddPolicy(Policies.EmployeeDelete,
+        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Delete)));
+
+    options.AddPolicy(Policies.RoleManage,
+        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Role.Manage)));
+
+});
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -159,5 +183,8 @@ app.UseAuthorization();
 
 // Map controllers
 app.MapControllers();
+
+// Seed initial data (roles and admin user)
+await IdentitySeeder.SeedRolesAsync(app.Services);
 
 app.Run();

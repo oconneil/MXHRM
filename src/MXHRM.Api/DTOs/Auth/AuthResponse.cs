@@ -12,4 +12,5 @@ public class AuthResponse
 
     public string CompanyID { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
+    public List<string> Roles { get; set; } = [];
 }
