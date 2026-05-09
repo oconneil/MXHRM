@@ -12,7 +12,7 @@ namespace MXHRM.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class EmployeesController : ControllerBase
+public class EmployeesController : BaseApiController
 {
     private readonly IEmployeeService _employeeService;
 
@@ -39,7 +39,7 @@ public class EmployeesController : ControllerBase
         var employee = await _employeeService.GetByIdAsync(companyId, employeeId);
 
         if (employee is null)
-            return NotFound();
+            return NotFoundError("Employee not found.");
 
         return Ok(employee);
     }
@@ -75,16 +75,13 @@ public class EmployeesController : ControllerBase
                 request);
 
             if (!updated)
-                return NotFound();
+                return NotFoundError("Employee not found.");
 
             return NoContent();
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Conflict(new
-            {
-                message = "ข้อมูลนี้ถูกแก้ไขโดยผู้ใช้อื่นแล้ว กรุณาโหลดข้อมูลใหม่อีกครั้ง"
-            });
+            return ConflictError("ข้อมูลนี้ถูกแก้ไขโดยผู้ใช้อื่นแล้ว กรุณาโหลดข้อมูลใหม่อีกครั้ง");
         }
     }
 
@@ -97,7 +94,7 @@ public class EmployeesController : ControllerBase
         var deleted = await _employeeService.DeleteAsync(companyId, employeeId);
 
         if (!deleted)
-            return NotFound();
+            return NotFoundError("Employee not found.");
 
         return NoContent();
     }

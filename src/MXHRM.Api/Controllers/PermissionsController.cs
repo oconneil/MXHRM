@@ -10,7 +10,7 @@ namespace MXHRM.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = Permissions.Role.Manage)]
-public class PermissionsController : ControllerBase
+public class PermissionsController : BaseApiController
 {
     private readonly AppDbContext _db;
 

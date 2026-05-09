@@ -17,7 +17,7 @@ using Microsoft.OpenApi;
 using MXHRM.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +35,30 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 builder.Services.AddControllers();
+
+// Configure custom error response for model validation errors
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+        var response = new ErrorResponse
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Code = ErrorCodes.ValidationError,
+            Message = "Validation failed.",
+            Details = errors,
+            TraceId = context.HttpContext.TraceIdentifier
+        };
+
+        return new BadRequestObjectResult(response);
+    };
+});
 
 // Add FluentValidation services
 builder.Services.AddFluentValidationAutoValidation();
@@ -121,6 +145,45 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+
+        // Custom events for handling authentication failures and forbidden responses
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                var response = new ErrorResponse
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized,
+                    Code = ErrorCodes.Unauthorized,
+                    Message = "Unauthorized.",
+                    TraceId = context.HttpContext.TraceIdentifier
+                };
+
+                await context.Response.WriteAsJsonAsync(response);
+            },
+
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+
+                var response = new ErrorResponse
+                {
+                    StatusCode = StatusCodes.Status403Forbidden,
+                    Code = ErrorCodes.Forbidden,
+                    Message = "You do not have permission to perform this action.",
+                    TraceId = context.HttpContext.TraceIdentifier
+                };
+
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        };
+
     });
 
 // Register the custom authorization handler for permissions

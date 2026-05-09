@@ -1,60 +1,99 @@
 using System.Net;
 using System.Text.Json;
-using MXHRM.Api.DTOs.Common;
+using MXHRM.Api.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace MXHRM.Api.Middlewares;
 
 public class GlobalExceptionMiddleware
 {
-    private readonly RequestDelegate _next;     // Middleware delegate to call the next middleware in the pipeline
-    private readonly IWebHostEnvironment _env;  // Environment to determine if we are in development or production
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;    // Logger to log exceptions
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
     public GlobalExceptionMiddleware(
         RequestDelegate next,
-        IWebHostEnvironment env,
         ILogger<GlobalExceptionMiddleware> logger)
     {
         _next = next;
-        _env = env;
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context)      // Main method that gets called for each HTTP request
+    public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);   // Call the next middleware in the pipeline
+            await _next(context);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteErrorResponseAsync(
+                context,
+                ex,
+                StatusCodes.Status401Unauthorized,
+                ErrorCodes.Unauthorized,
+                "Unauthorized.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            await WriteErrorResponseAsync(
+                context,
+                ex,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.BadRequest,
+                ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            await WriteErrorResponseAsync(
+                context,
+                ex,
+                StatusCodes.Status404NotFound,
+                ErrorCodes.NotFound,
+                ex.Message);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            await WriteErrorResponseAsync(
+                context,
+                ex,
+                StatusCodes.Status409Conflict,
+                ErrorCodes.Conflict,
+                "The record was modified by another user. Please reload and try again.");
         }
         catch (Exception ex)
         {
-            // Log the exception with the trace identifier
-            _logger.LogError(
+            await WriteErrorResponseAsync(
+                context,
                 ex,
-                "Unhandled exception occurred. TraceId: {TraceId}",
-                context.TraceIdentifier);
-
-            await HandleExceptionAsync(context, ex);
+                StatusCodes.Status500InternalServerError,
+                ErrorCodes.InternalServerError,
+                "An unexpected error occurred.");
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception ex)  // Method to handle the exception and return a standardized error response
+    private async Task WriteErrorResponseAsync(
+        HttpContext context,
+        Exception exception,
+        int statusCode,
+        string code,
+        string message,
+        object? details = null)
     {
-        context.Response.ContentType = "application/json";
-        
-        var statusCode = ex switch
-        {
-            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-            InvalidOperationException => HttpStatusCode.BadRequest,
-            _ => HttpStatusCode.InternalServerError
-        };
+        _logger.LogError(
+            exception,
+            "Request failed with status code {StatusCode} and error code {ErrorCode}",
+            statusCode,
+            code);
 
-        context.Response.StatusCode = (int)statusCode;
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
 
         var response = new ErrorResponse
         {
-            Message = "An unexpected error occurred.",
-            Detail = _env.IsDevelopment() ? ex.Message : null,
+            StatusCode = statusCode,
+            Code = code,
+            Message = message,
+            Details = details,
             TraceId = context.TraceIdentifier
         };
 

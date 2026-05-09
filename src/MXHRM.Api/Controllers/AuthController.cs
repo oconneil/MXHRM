@@ -8,7 +8,7 @@ namespace MXHRM.Api.Controllers;
 [AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
 

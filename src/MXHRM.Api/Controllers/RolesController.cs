@@ -1,4 +1,3 @@
-using System.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +14,7 @@ namespace MXHRM.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = Permissions.Role.Manage)]
-public class RolesController : ControllerBase
+public class RolesController : BaseApiController
 {
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly AppDbContext _db;
@@ -54,7 +53,7 @@ public class RolesController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (role is null)
-            return NotFound();
+            return NotFoundError("Role not found.");
 
         return Ok(role);
     }
@@ -66,7 +65,7 @@ public class RolesController : ControllerBase
 
         if (role is null)
         {
-            return NotFound();
+            return NotFoundError("Role not found.");
         }
 
         var permissions = await _db.RolePermissions
@@ -98,7 +97,7 @@ public class RolesController : ControllerBase
 
         if (role is null)
         {
-            return NotFound();
+            return NotFoundError("Role not found.");
         }
 
         var isAdminRole = string.Equals(
@@ -117,10 +116,7 @@ public class RolesController : ControllerBase
 
         if (isAdminRole && roleManagePermissionId != 0 && !requestedPermissionIds.Contains(roleManagePermissionId))
         {
-            return BadRequest(new
-            {
-                message = "Admin role must keep role.manage permission."
-            });
+            return BadRequestError("Admin role must keep role.manage permission.");
         }
 
         var existingPermissionIds = await _db.Permissions
@@ -130,10 +126,7 @@ public class RolesController : ControllerBase
 
         if (existingPermissionIds.Count != requestedPermissionIds.Count)
         {
-            return BadRequest(new
-            {
-                message = "Some permissions do not exist."
-            });
+            return BadRequestError("Some permissions do not exist.");
         }
 
         var currentRolePermissions = await _db.RolePermissions
@@ -163,7 +156,7 @@ public class RolesController : ControllerBase
         var result = await _roleManager.CreateAsync(role);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequestError("Failed to create role.", result.Errors);
 
         var response = new RoleResponse
         {
@@ -180,13 +173,13 @@ public class RolesController : ControllerBase
         var role = await _roleManager.FindByIdAsync(id);
 
         if (role is null)
-            return NotFound();
+            return NotFoundError("Role not found.");
 
         var protectedRoles = new[] { "Admin", "HR", "Employee" };
 
         if (protectedRoles.Contains(role.Name))
         {
-            return BadRequest(new { message = "This role is protected and cannot be updated." });
+            return BadRequestError("This role is protected and cannot be updated.");
         }
 
         role.Name = request.Name;
@@ -194,7 +187,7 @@ public class RolesController : ControllerBase
         var result = await _roleManager.UpdateAsync(role);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequestError("Failed to update role.", result.Errors);
 
         return NoContent();
     }
@@ -205,19 +198,19 @@ public class RolesController : ControllerBase
         var role = await _roleManager.FindByIdAsync(id);
 
         if (role is null)
-            return NotFound();
+            return NotFoundError("Role not found.");
 
         var protectedRoles = new[] { "Admin", "HR", "Employee" };
 
         if (protectedRoles.Contains(role.Name))
         {
-            return BadRequest(new { message = "This role is protected and cannot be deleted." });
+            return BadRequestError("This role is protected and cannot be deleted.");
         }
 
         var result = await _roleManager.DeleteAsync(role);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequestError("Failed to delete role.", result.Errors);
 
         return NoContent();
     }

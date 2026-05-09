@@ -15,7 +15,7 @@ namespace MXHRM.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = Permissions.Role.Manage)]
-public class UsersController : ControllerBase
+public class UsersController : BaseApiController
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
@@ -38,7 +38,7 @@ public class UsersController : ControllerBase
 
         if (user is null)
         {
-            return NotFound();
+            return NotFoundError("User not found.");
         }
 
         var userRoleNames = await _userManager.GetRolesAsync(user);
@@ -71,7 +71,7 @@ public class UsersController : ControllerBase
 
         if (user is null)
         {
-            return NotFound();
+            return NotFoundError("User not found.");
         }
 
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -87,10 +87,7 @@ public class UsersController : ControllerBase
 
         if (requestedRoles.Count != requestedRoleIds.Count)
         {
-            return BadRequest(new
-            {
-                message = "Some roles do not exist."
-            });
+            return BadRequestError("Some roles do not exist.");
         }
 
         var roleManagePermissionId = await _db.Permissions
@@ -113,10 +110,7 @@ public class UsersController : ControllerBase
 
         if (isUpdatingSelf && !willKeepRoleManage)
         {
-            return BadRequest(new
-            {
-                message = "You must keep at least one role with role.manage permission for yourself."
-            });
+            return BadRequestError("You must keep at least one role with role.manage permission for yourself.");
         }
 
 
@@ -126,7 +120,7 @@ public class UsersController : ControllerBase
 
         if (!removeResult.Succeeded)
         {
-            return BadRequest(removeResult.Errors);
+            return BadRequestError("Failed to update user roles.", removeResult.Errors);
         }
 
         var newRoleNames = requestedRoles
@@ -137,7 +131,7 @@ public class UsersController : ControllerBase
 
         if (!addResult.Succeeded)
         {
-            return BadRequest(addResult.Errors);
+            return BadRequestError("Failed to update user roles.", addResult.Errors);
         }
 
         return NoContent();
@@ -180,7 +174,7 @@ public class UsersController : ControllerBase
 
         if (user is null)
         {
-            return NotFound();
+            return NotFoundError("User not found.");
         }
 
         return Ok(user);
@@ -193,7 +187,7 @@ public class UsersController : ControllerBase
 
         if (user is null)
         {
-            return NotFound();
+            return NotFoundError("User not found.");
         }
 
         user.IsActive = true;
@@ -202,7 +196,7 @@ public class UsersController : ControllerBase
 
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            return BadRequestError("Failed to activate user.", result.Errors);
         }
 
         return NoContent();
@@ -215,7 +209,7 @@ public class UsersController : ControllerBase
 
         if (user is null)
         {
-            return NotFound();
+            return NotFoundError("User not found.");
         }
 
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -228,10 +222,7 @@ public class UsersController : ControllerBase
 
         if (isDeactivatingSelf)
         {
-            return BadRequest(new
-            {
-                message = "You cannot deactivate yourself."
-            });
+            return BadRequestError("You cannot deactivate yourself.");
         }
 
         user.IsActive = false;
@@ -240,7 +231,7 @@ public class UsersController : ControllerBase
 
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            return BadRequestError("Failed to deactivate user.", result.Errors);
         }
 
         return NoContent();
