@@ -126,11 +126,6 @@ public class AuthService : IAuthService
         var roles = await _userManager.GetRolesAsync(user);
         var permissions = await GetPermissionsByRolesAsync(roles);
 
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
         foreach (var permission in permissions)
         {
             claims.Add(new Claim(PermissionAuthorizationHandler.PermissionClaimType, permission));

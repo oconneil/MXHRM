@@ -7,7 +7,6 @@ using MXHRM.Api.DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using MXHRM.Api.Authorization;
 
-
 namespace MXHRM.Api.Controllers;
 
 [Authorize]
@@ -23,7 +22,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = Policies.EmployeeRead)]
+    [Authorize(Policy = Permissions.Employee.Read)]
     public async Task<ActionResult<PagedResponse<EmployeeResponse>>> GetAll(
     [FromQuery] GetEmployeesRequest request)
     {
@@ -32,7 +31,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet("{companyId}/{employeeId}")]
-    [Authorize(Policy = Policies.EmployeeRead)]
+    [Authorize(Policy = Permissions.Employee.Read)]
     public async Task<ActionResult<EmployeeResponse>> GetById(
         string companyId,
         string employeeId)
@@ -46,7 +45,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = Policies.EmployeeCreate)]
+    [Authorize(Policy = Permissions.Employee.Create)]
     public async Task<ActionResult<EmployeeResponse>> Create(CreateEmployeeRequest request)
     {
         var employee = await _employeeService.CreateAsync(request);
@@ -62,7 +61,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpPut("{companyId}/{employeeId}")]
-    [Authorize(Policy = Policies.EmployeeUpdate)]
+    [Authorize(Policy = Permissions.Employee.Update)]
     public async Task<IActionResult> Update(
         string companyId,
         string employeeId,
@@ -90,7 +89,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpDelete("{companyId}/{employeeId}")]
-    [Authorize(Policy = Policies.EmployeeDelete)]
+    [Authorize(Policy = Permissions.Employee.Delete)]
     public async Task<IActionResult> Delete(
         string companyId,
         string employeeId)

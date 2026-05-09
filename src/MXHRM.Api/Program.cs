@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MXHRM.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -124,24 +125,10 @@ builder.Services.AddAuthentication(options =>
 
 // Register the custom authorization handler for permissions
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(Policies.EmployeeRead,
-        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Read)));
-
-    options.AddPolicy(Policies.EmployeeCreate,
-        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Create)));
-
-    options.AddPolicy(Policies.EmployeeUpdate,
-        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Update)));
-
-    options.AddPolicy(Policies.EmployeeDelete,
-        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Employee.Delete)));
-
-    options.AddPolicy(Policies.RoleManage,
-        policy => policy.Requirements.Add(new PermissionRequirement(Permissions.Role.Manage)));
-
-});
+// Register the custom authorization policy provider to dynamically create policies based on permissions
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+// Add authorization services
+builder.Services.AddAuthorization();
 
 // Configure CORS
 builder.Services.AddCors(options =>
