@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth';
+import { ErrorService } from '../../../../core/services/error';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ export class Login {
   loading = signal(false);
   errorMessage = signal('');
   form: FormGroup;
+  protected readonly errorService = inject(ErrorService);
 
   constructor(
     private readonly fb: FormBuilder,
@@ -27,6 +29,7 @@ export class Login {
   }
 
   login(): void {
+    this.errorService.clear();
     this.errorMessage.set('');
 
     if (this.form.invalid) {
@@ -47,4 +50,12 @@ export class Login {
       }
     });
   }
+
+  protected fieldErrors(fieldName: string): string[] {
+    return this.errorService.getFieldErrors(
+      this.errorService.lastError(),
+      fieldName
+    );
+  }
+
 }

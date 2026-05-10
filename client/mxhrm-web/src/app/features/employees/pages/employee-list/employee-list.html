@@ -1,9 +1,11 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3 mb-0">Employees</h1>
 
+  @if (authService.hasPermission(employeeCreatePermission)) {
   <a class="btn btn-primary" routerLink="/employees/create">
     Create Employee
   </a>
+  }
 </div>
 
 <div class="card mb-3">
@@ -61,12 +63,14 @@
             </span>
           </td>
           <td class="text-end">
+            @if (authService.hasPermission(employeeUpdatePermission)) {
             <a class="btn btn-sm btn-outline-primary me-2"
               [routerLink]="['/employees/edit', employee.companyID, employee.employeeID]">
               Edit
             </a>
+            }
 
-            @if (authService.hasRole('Admin')) {
+            @if (authService.hasPermission(employeeDeletePermission)) {
             <button type="button" class="btn btn-sm btn-outline-danger"
               (click)="deleteEmployee(employee.companyID, employee.employeeID)">
               Delete

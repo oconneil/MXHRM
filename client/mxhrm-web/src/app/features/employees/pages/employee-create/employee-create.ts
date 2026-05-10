@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { EmployeeService } from '../../services/employee';
 import { CreateEmployeeRequest } from '../../models/employee';
+import { ErrorService } from '../../../../core/services/error';
 
 @Component({
   selector: 'app-employee-create',
@@ -19,7 +20,8 @@ export class EmployeeCreate {
   constructor(
     private readonly fb: FormBuilder,
     private readonly employeeService: EmployeeService,
-    private readonly router: Router
+    private readonly router: Router,
+    protected readonly errorService: ErrorService
   ) {
     this.form = this.fb.nonNullable.group({
       companyID: ['JCORP', [Validators.required, Validators.maxLength(20)]],
@@ -35,6 +37,7 @@ export class EmployeeCreate {
 
   save(): void {
     this.errorMessage.set('');
+    this.errorService.clear();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -53,7 +56,7 @@ export class EmployeeCreate {
       error: (err) => {
         this.saving.set(false);
         this.errorMessage.set(
-          err?.error?.message ?? 'ไม่สามารถบันทึกข้อมูลพนักงานได้'
+          err?.message ?? 'ไม่สามารถบันทึกข้อมูลพนักงานได้'
         );
       }
     });
@@ -66,5 +69,12 @@ export class EmployeeCreate {
   hasError(controlName: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  fieldErrors(fieldName: string): string[] {
+    return this.errorService.getFieldErrors(
+      this.errorService.lastError(),
+      fieldName
+    );
   }
 }

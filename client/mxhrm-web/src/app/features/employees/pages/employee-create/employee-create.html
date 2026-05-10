@@ -20,6 +20,9 @@
           @if (hasError('companyID')) {
             <div class="text-danger small">Company ID is required, max 20 characters.</div>
           }
+          @for (message of fieldErrors('companyID'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
+          }
         </div>
 
         <div class="col-md-6">
@@ -27,6 +30,9 @@
           <input class="form-control" type="text" formControlName="employeeID" />
           @if (hasError('employeeID')) {
             <div class="text-danger small">Employee ID is required, max 20 characters.</div>
+          }
+          @for (message of fieldErrors('employeeID'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
           }
         </div>
 
@@ -36,6 +42,9 @@
           @if (hasError('firstName')) {
             <div class="text-danger small">First name is required.</div>
           }
+          @for (message of fieldErrors('firstName'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
+          }
         </div>
 
         <div class="col-md-6">
@@ -43,6 +52,9 @@
           <input class="form-control" type="text" formControlName="lastName" />
           @if (hasError('lastName')) {
             <div class="text-danger small">Last name is required.</div>
+          }
+          @for (message of fieldErrors('lastName'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
           }
         </div>
 
@@ -52,6 +64,9 @@
           @if (hasError('email')) {
             <div class="text-danger small">Valid email is required.</div>
           }
+          @for (message of fieldErrors('email'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
+          }
         </div>
 
         <div class="col-md-6">
@@ -59,6 +74,9 @@
           <input class="form-control" type="date" formControlName="hireDate" />
           @if (hasError('hireDate')) {
             <div class="text-danger small">Hire date is required.</div>
+          }
+          @for (message of fieldErrors('hireDate'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
           }
         </div>
 
@@ -68,6 +86,9 @@
           @if (hasError('salary')) {
             <div class="text-danger small">Salary must be 0 or more.</div>
           }
+          @for (message of fieldErrors('salary'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
+          }
         </div>
 
         <div class="col-md-6">
@@ -75,6 +96,9 @@
           <input class="form-control" type="text" formControlName="createdBy" />
           @if (hasError('createdBy')) {
             <div class="text-danger small">Created by is required.</div>
+          }
+          @for (message of fieldErrors('createdBy'); track message) {
+            <div class="text-danger small mt-1">{{ message }}</div>
           }
         </div>
       </div>

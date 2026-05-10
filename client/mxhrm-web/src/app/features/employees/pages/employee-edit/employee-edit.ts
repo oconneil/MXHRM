@@ -4,6 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { EmployeeService } from '../../services/employee';
 import { UpdateEmployeeRequest } from '../../models/employee';
+import { ErrorCodes } from '../../../../core/models/error-codes';
+import { ErrorService } from '../../../../core/services/error';
 
 @Component({
   selector: 'app-employee-edit',
@@ -26,7 +28,8 @@ export class EmployeeEdit implements OnInit {
     private readonly fb: FormBuilder,
     private readonly employeeService: EmployeeService,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    protected readonly errorService: ErrorService
   ) {
     this.form = this.fb.nonNullable.group({
       firstName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -54,6 +57,7 @@ export class EmployeeEdit implements OnInit {
   loadEmployee(): void {
     this.loading.set(true);
     this.errorMessage.set('');
+    this.errorService.clear();
 
     this.employeeService.getEmployeeById(this.companyID, this.employeeID).subscribe({
       next: (employee) => {
@@ -80,6 +84,7 @@ export class EmployeeEdit implements OnInit {
 
   save(): void {
     this.errorMessage.set('');
+    this.errorService.clear();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -103,7 +108,7 @@ export class EmployeeEdit implements OnInit {
         error: (err) => {
           this.saving.set(false);
 
-          if (err.status === 409) {
+          if (err.code === ErrorCodes.Conflict) {
             this.errorMessage.set(
               'ข้อมูลนี้ถูกแก้ไขโดยผู้ใช้อื่นแล้ว กรุณากลับไปโหลดข้อมูลใหม่อีกครั้ง'
             );
@@ -111,7 +116,7 @@ export class EmployeeEdit implements OnInit {
           }
 
           this.errorMessage.set(
-            err?.error?.message ?? 'ไม่สามารถแก้ไขข้อมูลพนักงานได้'
+            err?.message ?? 'ไม่สามารถแก้ไขข้อมูลพนักงานได้'
           );
         }
       });
@@ -124,5 +129,12 @@ export class EmployeeEdit implements OnInit {
   hasError(controlName: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  fieldErrors(fieldName: string): string[] {
+    return this.errorService.getFieldErrors(
+      this.errorService.lastError(),
+      fieldName
+    );
   }
 }

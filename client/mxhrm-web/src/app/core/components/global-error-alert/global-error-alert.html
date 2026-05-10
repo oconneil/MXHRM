@@ -1,0 +1,22 @@
+@if (errorService.lastError(); as error) {
+<section class="toast-stack" aria-live="polite" aria-atomic="true">
+    <div class="mxhrm-toast" role="alert">
+        <div class="toast-accent"></div>
+
+        <div class="toast-body">
+            <div class="toast-title">
+                {{ errorService.getUserMessage(error) }}
+            </div>
+
+            @if (error.traceId) {
+            <div class="toast-meta">
+                Trace ID: {{ error.traceId }}
+            </div>
+            }
+        </div>
+
+        <button type="button" class="btn-close toast-close" aria-label="Close" (click)="close()">
+        </button>
+    </div>
+</section>
+}

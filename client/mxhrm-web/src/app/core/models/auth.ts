@@ -11,6 +11,7 @@ export interface AuthResponse {
   displayName: string;
   companyID: string;
   roles: string[];
+  permissions: string[];
 }
 
 export interface RefreshTokenRequest {

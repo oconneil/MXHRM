@@ -5,6 +5,7 @@ import { EmployeeResponse, PagedResponse } from '../../models/employee';
 import { EmployeeService } from '../../services/employee';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth';
+import { Permissions } from '../../../../core/models/permissions';
 
 @Component({
   selector: 'app-employee-list',
@@ -13,6 +14,10 @@ import { AuthService } from '../../../../core/services/auth';
   styleUrl: './employee-list.scss'
 })
 export class EmployeeList implements OnInit {
+  readonly employeeCreatePermission = Permissions.Employee.Create;
+  readonly employeeUpdatePermission = Permissions.Employee.Update;
+  readonly employeeDeletePermission = Permissions.Employee.Delete;
+
   employees = signal<EmployeeResponse[]>([]);
   loading = signal(false);
   errorMessage = signal('');
