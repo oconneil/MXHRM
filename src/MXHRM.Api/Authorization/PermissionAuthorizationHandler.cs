@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using MXHRM.Application.Authorization;
 
 namespace MXHRM.Api.Authorization;
 
 public sealed class PermissionAuthorizationHandler
     : AuthorizationHandler<PermissionRequirement>
 {
-    public const string PermissionClaimType = "permission";
+    public const string PermissionClaimType = AuthorizationClaimTypes.Permission;
 
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,

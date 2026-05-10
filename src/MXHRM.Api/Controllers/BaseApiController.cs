@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MXHRM.Api.Common;
+using MXHRM.Application.Common;
 
 namespace MXHRM.Api.Controllers;
 
@@ -46,5 +47,14 @@ public abstract class BaseApiController : ControllerBase
             StatusCodes.Status409Conflict,
             ErrorCodes.Conflict,
             message);
+    }
+
+    protected ObjectResult OperationError(OperationResult result)
+    {
+        return result.ErrorType switch
+        {
+            OperationErrorType.NotFound => NotFoundError(result.ErrorMessage ?? "Resource not found."),
+            _ => BadRequestError(result.ErrorMessage ?? "Request failed.", result.Details)
+        };
     }
 }

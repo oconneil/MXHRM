@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MXHRM.Api/MXHRM.Api.csproj" />
+    <Project Path="src/MXHRM.Application/MXHRM.Application.csproj" />
+    <Project Path="src/MXHRM.Domain/MXHRM.Domain.csproj" />
+    <Project Path="src/MXHRM.Infrastructure/MXHRM.Infrastructure.csproj" />
+  </Folder>
 </Solution>

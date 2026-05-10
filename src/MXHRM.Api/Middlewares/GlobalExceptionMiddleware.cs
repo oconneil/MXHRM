@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using MXHRM.Application.Common;
 using MXHRM.Api.Common;
-using Microsoft.EntityFrameworkCore;
 
 namespace MXHRM.Api.Middlewares;
 
@@ -51,7 +51,7 @@ public class GlobalExceptionMiddleware
                 ErrorCodes.NotFound,
                 ex.Message);
         }
-        catch (DbUpdateConcurrencyException ex)
+        catch (ConcurrencyConflictException ex)
         {
             await WriteErrorResponseAsync(
                 context,

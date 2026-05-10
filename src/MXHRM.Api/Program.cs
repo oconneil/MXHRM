@@ -1,23 +1,18 @@
-using Microsoft.EntityFrameworkCore;
-using MXHRM.Api.Data;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using MXHRM.Api.Validators.Employees;
-using MXHRM.Api.Services.Employees;
-using MXHRM.Api.Services.Auth;
+using MXHRM.Api.Authorization;
 using MXHRM.Api.Middlewares;
-using MXHRM.Api.Models;
 using MXHRM.Api.Common;
 using Serilog;
-using Microsoft.AspNetCore.Identity;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using MXHRM.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using MXHRM.Application;
+using MXHRM.Infrastructure;
+using MXHRM.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,9 +61,8 @@ builder.Services.AddFluentValidationAutoValidation();
 // Register validators
 builder.Services.AddValidatorsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 
-// Register application services
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// Register infrastructure services (EF Core, Identity, and use-case implementations)
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -93,25 +87,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-
-// Configure Entity Framework Core with SQL Server
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure Identity services
-builder.Services.AddIdentityCore<ApplicationUser>(options =>
-    {
-        options.Password.RequiredLength = 8;
-        options.Password.RequireDigit = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireNonAlphanumeric = false;
-
-        // Allow duplicate emails for different users
-        options.User.RequireUniqueEmail = false;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];

@@ -1,38 +1,20 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MXHRM.Api.Authorization;
-using MXHRM.Api.Data;
-using MXHRM.Api.DTOs.Permissions;
+using MXHRM.Application.Authorization;
+using MXHRM.Application.Permissions;
+using MXHRM.Application.Permissions.DTOs;
 
 namespace MXHRM.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = Permissions.Role.Manage)]
-public class PermissionsController : BaseApiController
+public class PermissionsController(IPermissionService permissionService) : BaseApiController
 {
-    private readonly AppDbContext _db;
-
-    public PermissionsController(AppDbContext db)
-    {
-        _db = db;
-    }
-
     [HttpGet]
     public async Task<ActionResult<List<PermissionResponse>>> GetAll()
     {
-        var permissions = await _db.Permissions
-            .AsNoTracking()
-            .OrderBy(x => x.Code)
-            .Select(x => new PermissionResponse
-            {
-                Id = x.Id,
-                Code = x.Code,
-                Name = x.Name
-            })
-            .ToListAsync();
-
+        var permissions = await permissionService.GetAllAsync();
         return Ok(permissions);
     }
 }

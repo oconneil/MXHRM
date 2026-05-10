@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MXHRM.Api.DTOs.Employees;
-using MXHRM.Api.Models;
-using MXHRM.Api.Services.Employees;
-using MXHRM.Api.DTOs.Common;
+using MXHRM.Application.Employees;
 using Microsoft.AspNetCore.Authorization;
-using MXHRM.Api.Authorization;
+using MXHRM.Application.Authorization;
+using MXHRM.Application.Common;
+using MXHRM.Application.Employees.DTOs;
 
 namespace MXHRM.Api.Controllers;
 
@@ -79,7 +77,7 @@ public class EmployeesController : BaseApiController
 
             return NoContent();
         }
-        catch (DbUpdateConcurrencyException)
+        catch (ConcurrencyConflictException)
         {
             return ConflictError("ข้อมูลนี้ถูกแก้ไขโดยผู้ใช้อื่นแล้ว กรุณาโหลดข้อมูลใหม่อีกครั้ง");
         }
