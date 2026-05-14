@@ -3,17 +3,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MXHRM.Application.Auth;
+using MXHRM.Application.Common.Interfaces;
 using MXHRM.Application.Employees;
 using MXHRM.Application.Permissions;
 using MXHRM.Application.Roles;
 using MXHRM.Application.Users;
 using MXHRM.Infrastructure.Auth;
+using MXHRM.Infrastructure.Caching;
 using MXHRM.Infrastructure.Data;
 using MXHRM.Infrastructure.Employees;
 using MXHRM.Infrastructure.Identity;
 using MXHRM.Infrastructure.Permissions;
 using MXHRM.Infrastructure.Roles;
 using MXHRM.Infrastructure.Users;
+using StackExchange.Redis;
 
 namespace MXHRM.Infrastructure;
 
@@ -23,6 +26,25 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration["Redis:ConnectionString"];
+            options.InstanceName = "MXHRM:";
+        });
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var redisConnectionString = configuration["Redis:ConnectionString"];
+
+            if (string.IsNullOrWhiteSpace(redisConnectionString))
+            {
+                throw new InvalidOperationException("Redis connection string is not configured.");
+            }
+
+            return ConnectionMultiplexer.Connect(redisConnectionString);
+        });
+
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
@@ -43,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         return services;
     }

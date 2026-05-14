@@ -1,0 +1,25 @@
+services:
+  seq:
+    image: datalust/seq:latest
+    container_name: mxhrm-seq
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINUSERNAME=admin
+      - SEQ_FIRSTRUN_ADMINPASSWORD=P@ssw0rd
+    volumes:
+      - seq-data:/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mxhrm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  seq-data:
+  redis-data:

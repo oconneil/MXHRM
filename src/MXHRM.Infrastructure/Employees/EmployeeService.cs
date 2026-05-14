@@ -5,6 +5,8 @@ using MXHRM.Application.Common;
 using MXHRM.Application.Employees;
 using MXHRM.Application.Employees.DTOs;
 using MXHRM.Domain.Employees;
+using System.Text.Json;
+using MXHRM.Application.Common.Interfaces;
 
 namespace MXHRM.Infrastructure.Employees;
 
@@ -12,17 +14,31 @@ public class EmployeeService : IEmployeeService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<EmployeeService> _logger;
+    private readonly ICacheService _cache;
 
     public EmployeeService(
     AppDbContext db,
-    ILogger<EmployeeService> logger)
+    ILogger<EmployeeService> logger,
+    ICacheService cache)
     {
         _db = db;
         _logger = logger;
+        _cache = cache;
     }
+
 
     public async Task<PagedResponse<EmployeeResponse>> GetAllAsync(GetEmployeesRequest request)
     {
+        var cacheKey = GetEmployeeListCacheKey(request);
+
+        var cachedEmployees = await _cache.GetAsync<PagedResponse<EmployeeResponse>>(cacheKey);
+
+        if (cachedEmployees is not null)
+        {
+            _logger.LogInformation("Employee list returned from cache. Key: {CacheKey}", cacheKey);
+            return cachedEmployees;
+        }
+
         var query = _db.Employees
             .AsNoTracking()
             .AsQueryable();
@@ -40,32 +56,63 @@ public class EmployeeService : IEmployeeService
 
         var totalItems = await query.CountAsync();
 
-        var employees = await query
+        var employees = await ProjectToResponse(query)
             .OrderBy(x => x.EmployeeID)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .ToListAsync();
 
-        return new PagedResponse<EmployeeResponse>
+        var response = new PagedResponse<EmployeeResponse>
         {
-            Items = employees.Select(ToResponse).ToList(),
+            Items = employees,
             Page = request.Page,
             PageSize = request.PageSize,
             TotalItems = totalItems,
             TotalPages = (int)Math.Ceiling(totalItems / (double)request.PageSize)
         };
+
+
+        await _cache.SetAsync(
+            cacheKey,
+            response,
+            TimeSpan.FromMinutes(5));
+
+        _logger.LogInformation("Employee list saved to cache. Key: {CacheKey}", cacheKey);
+
+        return response;
     }
+
 
     public async Task<EmployeeResponse?> GetByIdAsync(string companyId, string employeeId)
     {
-        var employee = await _db.Employees
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x =>
-                x.CompanyID == companyId &&
-                x.EmployeeID == employeeId);
+        var cacheKey = GetEmployeeDetailCacheKey(companyId, employeeId);
 
-        return employee is null ? null : ToResponse(employee);
+        var cachedEmployee = await _cache.GetAsync<EmployeeResponse>(cacheKey);
+
+        if (cachedEmployee is not null)
+        {
+            _logger.LogInformation("Employee detail returned from cache. Key: {CacheKey}", cacheKey);
+            return cachedEmployee;
+        }
+
+        var response = await ProjectToResponse(_db.Employees.AsNoTracking())
+            .FirstOrDefaultAsync(x => x.CompanyID == companyId && x.EmployeeID == employeeId);
+
+        if (response is null)
+        {
+            return null;
+        }
+
+        await _cache.SetAsync(
+            cacheKey,
+            response,
+            TimeSpan.FromMinutes(5));
+
+        _logger.LogInformation("Employee detail saved to cache. Key: {CacheKey}", cacheKey);
+
+        return response;
     }
+
 
     public async Task<EmployeeResponse> CreateAsync(CreateEmployeeRequest request)
     {
@@ -87,6 +134,11 @@ public class EmployeeService : IEmployeeService
 
         _db.Employees.Add(employee);
         await _db.SaveChangesAsync();
+
+        await ClearEmployeeCacheAsync(
+            employee.CompanyID,
+            employee.EmployeeID);
+
 
         _logger.LogInformation
         (
@@ -144,6 +196,8 @@ public class EmployeeService : IEmployeeService
                 ex);
         }
 
+        await ClearEmployeeCacheAsync(companyId, employeeId);
+
         _logger.LogInformation
         (
             "Employee updated. CompanyID: {CompanyID}, EmployeeID: {EmployeeID}",
@@ -176,6 +230,8 @@ public class EmployeeService : IEmployeeService
         _db.Employees.Remove(employee);
         await _db.SaveChangesAsync();
 
+        await ClearEmployeeCacheAsync(companyId, employeeId);
+
         _logger.LogInformation
         (
             "Employee deleted. CompanyID: {CompanyID}, EmployeeID: {EmployeeID}",
@@ -184,6 +240,36 @@ public class EmployeeService : IEmployeeService
         );
 
         return true;
+    }
+
+    private static string GetEmployeeListCacheKey(GetEmployeesRequest request)
+    {
+        var search = string.IsNullOrWhiteSpace(request.Search)
+            ? "all"
+            : request.Search.Trim().ToLowerInvariant();
+
+        return $"employees:list:page={request.Page}:size={request.PageSize}:search={search}";
+    }
+
+
+    private static string GetEmployeeDetailCacheKey(string companyId, string employeeId)
+    {
+        return $"employees:detail:company={companyId}:employee={employeeId}";
+    }
+
+    private const string EmployeeListCachePrefix = "employees:list:";
+
+    private async Task ClearEmployeeCacheAsync(string companyId, string employeeId, CancellationToken cancellationToken = default)
+    {
+        var detailCacheKey = GetEmployeeDetailCacheKey(companyId, employeeId);
+
+        await _cache.RemoveAsync(detailCacheKey, cancellationToken);
+        await _cache.RemoveByPrefixAsync(EmployeeListCachePrefix, cancellationToken);
+
+        _logger.LogInformation(
+            "Employee cache cleared. DetailKey: {DetailCacheKey}, ListPrefix: {ListPrefix}",
+            detailCacheKey,
+            EmployeeListCachePrefix);
     }
 
     private static EmployeeResponse ToResponse(Employee employee)
@@ -202,4 +288,23 @@ public class EmployeeService : IEmployeeService
             RowVersion = employee.RowVersion
         };
     }
+
+    private static IQueryable<EmployeeResponse> ProjectToResponse(
+    IQueryable<Employee> query)
+    {
+        return query.Select(x => new EmployeeResponse
+        {
+            CompanyID = x.CompanyID,
+            EmployeeID = x.EmployeeID,
+            FirstName = x.FirstName,
+            LastName = x.LastName,
+            FullName = x.FirstName + " " + x.LastName,
+            Email = x.Email,
+            HireDate = x.HireDate,
+            Salary = x.Salary,
+            IsActive = x.IsActive,
+            RowVersion = x.RowVersion
+        });
+    }
+
 }
