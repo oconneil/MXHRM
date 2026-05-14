@@ -39,6 +39,20 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
             entity.Property(e => e.Salary)
                 .HasColumnType("decimal(18,2)");
+
+            entity.HasIndex(e => e.EmployeeID)
+                .HasDatabaseName("IX_Employees_EmployeeID");
+
+            entity.HasIndex(e => e.Email)
+                .HasDatabaseName("IX_Employees_Email");
+
+            entity.HasIndex(e => new
+            {
+                e.CompanyID,
+                e.IsActive,
+                e.EmployeeID
+            })
+                .HasDatabaseName("IX_Employees_CompanyID_IsActive_EmployeeID");
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
