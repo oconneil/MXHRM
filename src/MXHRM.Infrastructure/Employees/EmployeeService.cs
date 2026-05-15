@@ -7,6 +7,8 @@ using MXHRM.Application.Employees.DTOs;
 using MXHRM.Domain.Employees;
 using System.Text.Json;
 using MXHRM.Application.Common.Interfaces;
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 
 namespace MXHRM.Infrastructure.Employees;
 
@@ -15,15 +17,19 @@ public class EmployeeService : IEmployeeService
     private readonly AppDbContext _db;
     private readonly ILogger<EmployeeService> _logger;
     private readonly ICacheService _cache;
+    private readonly IConfiguration _configuration;
+
 
     public EmployeeService(
     AppDbContext db,
     ILogger<EmployeeService> logger,
-    ICacheService cache)
+    ICacheService cache,
+    IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
         _cache = cache;
+        _configuration = configuration;
     }
 
 
@@ -38,6 +44,8 @@ public class EmployeeService : IEmployeeService
             _logger.LogInformation("Employee list returned from cache. Key: {CacheKey}", cacheKey);
             return cachedEmployees;
         }
+
+        var stopwatch = Stopwatch.StartNew();
 
         var query = _db.Employees
             .AsNoTracking()
@@ -57,8 +65,9 @@ public class EmployeeService : IEmployeeService
         var totalItems = await query.CountAsync();
 
         var employees = await ProjectToResponse(query)
-            .OrderBy(x => x.EmployeeID)
-            .Skip((request.Page - 1) * request.PageSize)
+            .OrderBy(x => x.CompanyID)
+            .ThenBy(x => x.EmployeeID)
+            .Skip(GetSkipCount(request))
             .Take(request.PageSize)
             .ToListAsync();
 
@@ -78,6 +87,31 @@ public class EmployeeService : IEmployeeService
             TimeSpan.FromMinutes(5));
 
         _logger.LogInformation("Employee list saved to cache. Key: {CacheKey}", cacheKey);
+
+        stopwatch.Stop();
+
+        var slowQueryThresholdMs = _configuration.GetValue<int>("Performance:SlowQueryThresholdMs", 500);
+
+        if (stopwatch.ElapsedMilliseconds >= slowQueryThresholdMs)
+        {
+            _logger.LogWarning(
+                "Slow employee list query detected. Elapsed: {ElapsedMilliseconds} ms, Threshold: {ThresholdMs} ms, Page: {Page}, PageSize: {PageSize}, Search: {Search}",
+                stopwatch.ElapsedMilliseconds,
+                slowQueryThresholdMs,
+                request.Page,
+                request.PageSize,
+                request.Search);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Employee list database query completed in {ElapsedMilliseconds} ms. Page: {Page}, PageSize: {PageSize}, Search: {Search}",
+                stopwatch.ElapsedMilliseconds,
+                request.Page,
+                request.PageSize,
+                request.Search);
+        }
+
 
         return response;
     }
@@ -305,6 +339,11 @@ public class EmployeeService : IEmployeeService
             IsActive = x.IsActive,
             RowVersion = x.RowVersion
         });
+    }
+
+    private static int GetSkipCount(GetEmployeesRequest request)
+    {
+        return (request.Page - 1) * request.PageSize;
     }
 
 }
