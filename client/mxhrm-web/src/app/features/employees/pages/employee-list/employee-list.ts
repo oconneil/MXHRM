@@ -27,6 +27,10 @@ export class EmployeeList implements OnInit {
   totalItems = signal(0);
   totalPages = signal(0);
   search = signal('');
+  companyID = signal('');
+  isActive = signal<boolean | null>(null);
+  sortBy = signal('employeeId');
+  sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly authService = inject(AuthService);
 
@@ -41,7 +45,15 @@ export class EmployeeList implements OnInit {
     this.errorMessage.set('');
 
     this.employeeService
-      .getEmployees(this.page(), this.pageSize(), this.search())
+      .getEmployees({
+        search: this.search(),
+        companyID: this.companyID(),
+        isActive: this.isActive(),
+        sortBy: this.sortBy(),
+        sortDirection: this.sortDirection(),
+        page: this.page(),
+        pageSize: this.pageSize()
+      })
       .subscribe({
         next: (res: PagedResponse<EmployeeResponse>) => {
           this.employees.set(res.items);
@@ -57,6 +69,34 @@ export class EmployeeList implements OnInit {
   }
 
   onSearch(): void {
+    this.page.set(1);
+    this.loadEmployees();
+  }
+
+  onIsActiveChange(value: string): void {
+    if (value === '') {
+      this.isActive.set(null);
+      return;
+    }
+
+    this.isActive.set(value === 'true');
+  }
+
+  onSortDirectionChange(value: string): void {
+    this.sortDirection.set(value === 'desc' ? 'desc' : 'asc');
+  }
+
+  applyFilters(): void {
+    this.page.set(1);
+    this.loadEmployees();
+  }
+
+  resetFilters(): void {
+    this.search.set('');
+    this.companyID.set('');
+    this.isActive.set(null);
+    this.sortBy.set('employeeId');
+    this.sortDirection.set('asc');
     this.page.set(1);
     this.loadEmployees();
   }

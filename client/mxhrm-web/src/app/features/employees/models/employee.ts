@@ -33,6 +33,16 @@ export interface EmployeeResponse {
   rowVersion: string;
 }
 
+export interface GetEmployeesRequest {
+  search?: string;
+  companyID?: string;
+  isActive?: boolean | null;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
+}
+
 export interface PagedResponse<T> {
   items: T[];
   page: number;

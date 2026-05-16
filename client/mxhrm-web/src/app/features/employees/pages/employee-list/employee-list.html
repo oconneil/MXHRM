@@ -10,13 +10,58 @@
 
 <div class="card mb-3">
   <div class="card-body">
-    <div class="input-group">
-      <input type="text" class="form-control" placeholder="Search employee..." [ngModel]="search()"
-        (ngModelChange)="search.set($event)" (keyup.enter)="onSearch()" />
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Search employee..." [ngModel]="search()"
+          (ngModelChange)="search.set($event)" (keyup.enter)="applyFilters()" />
+      </div>
 
-      <button class="btn btn-outline-primary" type="button" (click)="onSearch()">
-        Search
-      </button>
+      <div class="col-md-2">
+        <label class="form-label">Company ID</label>
+        <input type="text" class="form-control" placeholder="C001" [ngModel]="companyID()"
+          (ngModelChange)="companyID.set($event)" (keyup.enter)="applyFilters()" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" [ngModel]="isActive() === null ? '' : isActive()"
+          (ngModelChange)="onIsActiveChange($event)">
+          <option value="">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Sort By</label>
+        <select class="form-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+          <option value="employeeId">Employee ID</option>
+          <option value="firstName">First Name</option>
+          <option value="lastName">Last Name</option>
+          <option value="email">Email</option>
+          <option value="hireDate">Hire Date</option>
+          <option value="salary">Salary</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Direction</label>
+        <select class="form-select" [ngModel]="sortDirection()" (ngModelChange)="onSortDirectionChange($event)">
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-outline-primary" type="button" (click)="applyFilters()">
+          Apply Filters
+        </button>
+
+        <button class="btn btn-outline-secondary" type="button" (click)="resetFilters()">
+          Reset
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -50,7 +95,7 @@
       </thead>
 
       <tbody>
-        @for (employee of employees(); track employee.employeeID) {
+        @for (employee of employees(); track employee.companyID + '-' + employee.employeeID) {
         <tr>
           <td>{{ employee.employeeID }}</td>
           <td>{{ employee.fullName }}</td>

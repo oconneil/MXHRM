@@ -51,22 +51,13 @@ public class EmployeeService : IEmployeeService
             .AsNoTracking()
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var search = request.Search.Trim();
-
-            query = query.Where(x =>
-                x.EmployeeID.Contains(search) ||
-                x.FirstName.Contains(search) ||
-                x.LastName.Contains(search) ||
-                x.Email.Contains(search));
-        }
+        query = ApplyFilters(query, request);
 
         var totalItems = await query.CountAsync();
 
-        var employees = await ProjectToResponse(query)
-            .OrderBy(x => x.CompanyID)
-            .ThenBy(x => x.EmployeeID)
+        var employeesQuery = ApplySorting(ProjectToResponse(query), request);
+
+        var employees = await employeesQuery
             .Skip(GetSkipCount(request))
             .Take(request.PageSize)
             .ToListAsync();
@@ -282,9 +273,24 @@ public class EmployeeService : IEmployeeService
             ? "all"
             : request.Search.Trim().ToLowerInvariant();
 
-        return $"employees:list:page={request.Page}:size={request.PageSize}:search={search}";
-    }
+        var companyId = string.IsNullOrWhiteSpace(request.CompanyID)
+            ? "all"
+            : request.CompanyID.Trim().ToLowerInvariant();
 
+        var isActive = request.IsActive.HasValue
+            ? request.IsActive.Value.ToString().ToLowerInvariant()
+            : "all";
+
+        var sortBy = string.IsNullOrWhiteSpace(request.SortBy)
+            ? "employeeid"
+            : request.SortBy.Trim().ToLowerInvariant();
+
+        var sortDirection = string.IsNullOrWhiteSpace(request.SortDirection)
+            ? "asc"
+            : request.SortDirection.Trim().ToLowerInvariant();
+
+        return $"employees:list:company={companyId}:active={isActive}:page={request.Page}:size={request.PageSize}:search={search}:sort={sortBy}:direction={sortDirection}";
+    }
 
     private static string GetEmployeeDetailCacheKey(string companyId, string employeeId)
     {
@@ -344,6 +350,70 @@ public class EmployeeService : IEmployeeService
     private static int GetSkipCount(GetEmployeesRequest request)
     {
         return (request.Page - 1) * request.PageSize;
+    }
+
+    private static IQueryable<Employee> ApplyFilters(
+    IQueryable<Employee> query,
+    GetEmployeesRequest request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.CompanyID))
+        {
+            query = query.Where(x => x.CompanyID == request.CompanyID.Trim());
+        }
+
+        if (request.IsActive.HasValue)
+        {
+            query = query.Where(x => x.IsActive == request.IsActive.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim();
+
+            query = query.Where(x =>
+                x.EmployeeID.Contains(search) ||
+                x.FirstName.Contains(search) ||
+                x.LastName.Contains(search) ||
+                x.Email.Contains(search));
+        }
+
+        return query;
+    }
+
+    private static IQueryable<EmployeeResponse> ApplySorting(
+    IQueryable<EmployeeResponse> query,
+    GetEmployeesRequest request)
+    {
+        var sortBy = request.SortBy?.Trim().ToLowerInvariant() ?? "employeeid";
+        var sortDirection = request.SortDirection?.Trim().ToLowerInvariant() ?? "asc";
+        var isDescending = sortDirection == "desc";
+
+        return sortBy switch
+        {
+            "firstname" => isDescending
+                ? query.OrderByDescending(x => x.FirstName).ThenBy(x => x.EmployeeID)
+                : query.OrderBy(x => x.FirstName).ThenBy(x => x.EmployeeID),
+
+            "lastname" => isDescending
+                ? query.OrderByDescending(x => x.LastName).ThenBy(x => x.EmployeeID)
+                : query.OrderBy(x => x.LastName).ThenBy(x => x.EmployeeID),
+
+            "email" => isDescending
+                ? query.OrderByDescending(x => x.Email).ThenBy(x => x.EmployeeID)
+                : query.OrderBy(x => x.Email).ThenBy(x => x.EmployeeID),
+
+            "hiredate" => isDescending
+                ? query.OrderByDescending(x => x.HireDate).ThenBy(x => x.EmployeeID)
+                : query.OrderBy(x => x.HireDate).ThenBy(x => x.EmployeeID),
+
+            "salary" => isDescending
+                ? query.OrderByDescending(x => x.Salary).ThenBy(x => x.EmployeeID)
+                : query.OrderBy(x => x.Salary).ThenBy(x => x.EmployeeID),
+
+            _ => isDescending
+                ? query.OrderByDescending(x => x.CompanyID).ThenByDescending(x => x.EmployeeID)
+                : query.OrderBy(x => x.CompanyID).ThenBy(x => x.EmployeeID)
+        };
     }
 
 }

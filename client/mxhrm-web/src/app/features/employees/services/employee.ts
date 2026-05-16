@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import {
   CreateEmployeeRequest,
   EmployeeResponse,
+  GetEmployeesRequest,
   PagedResponse,
   UpdateEmployeeRequest
 } from '../models/employee';
@@ -17,13 +18,29 @@ export class EmployeeService {
 
   constructor(private readonly http: HttpClient) { }
 
-  getEmployees(page = 1, pageSize = 10, search = ''): Observable<PagedResponse<EmployeeResponse>> {
+  getEmployees(request: GetEmployeesRequest): Observable<PagedResponse<EmployeeResponse>> {
     let params = new HttpParams()
-      .set('page', page)
-      .set('pageSize', pageSize);
+      .set('page', request.page)
+      .set('pageSize', request.pageSize);
 
-    if (search.trim()) {
-      params = params.set('search', search.trim());
+    if (request.search?.trim()) {
+      params = params.set('search', request.search.trim());
+    }
+
+    if (request.companyID?.trim()) {
+      params = params.set('companyID', request.companyID.trim());
+    }
+
+    if (request.isActive !== null && request.isActive !== undefined) {
+      params = params.set('isActive', request.isActive);
+    }
+
+    if (request.sortBy?.trim()) {
+      params = params.set('sortBy', request.sortBy.trim());
+    }
+
+    if (request.sortDirection) {
+      params = params.set('sortDirection', request.sortDirection);
     }
 
     return this.http.get<PagedResponse<EmployeeResponse>>(this.apiUrl, { params });
