@@ -13,7 +13,12 @@ using Microsoft.AspNetCore.Mvc;
 using MXHRM.Application;
 using MXHRM.Infrastructure;
 using MXHRM.Infrastructure.Data;
+using Hangfire;
+using MXHRM.Infrastructure.Jobs;
+using Hangfire.Dashboard;
+using MXHRM.Api.Hangfire;
 
+// Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -206,10 +211,37 @@ app.UseCors("AngularDev");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Get the Hangfire dashboard path from configuration, with a default fallback
+var hangfireDashboardPath = builder.Configuration["Hangfire:DashboardPath"] ?? "/hangfire";
+// Configure Hangfire dashboard with authorization in production, and open access in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard(hangfireDashboardPath);
+}
+else
+{
+    app.UseHangfireDashboard(
+        hangfireDashboardPath,
+        new DashboardOptions
+        {
+            Authorization = new[]
+            {
+                new HangfireDashboardAuthorizationFilter()
+            }
+        });
+}
+
 // Map controllers
 app.MapControllers();
 
 // Seed initial data (roles and admin user)
 await IdentitySeeder.SeedRolesAsync(app.Services);
+
+// Configure recurring jobs
+var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+recurringJobManager.AddOrUpdate<SystemHealthJob>(
+    "system-health-job",
+    job => job.ExecuteAsync(),
+    Cron.Minutely);
 
 app.Run();

@@ -17,6 +17,9 @@ using MXHRM.Infrastructure.Permissions;
 using MXHRM.Infrastructure.Roles;
 using MXHRM.Infrastructure.Users;
 using StackExchange.Redis;
+using Hangfire;
+using Hangfire.SqlServer;
+using MXHRM.Infrastructure.Jobs;
 
 namespace MXHRM.Infrastructure;
 
@@ -26,6 +29,28 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(defaultConnectionString))
+        {
+            throw new InvalidOperationException("Default database connection string is not configured.");
+        }
+
+        services.AddHangfire(config =>
+        {
+            config
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(defaultConnectionString, new SqlServerStorageOptions
+                {
+                    SchemaName = configuration["Hangfire:SchemaName"] ?? "Hangfire",
+                    PrepareSchemaIfNecessary = true
+                });
+        });
+
+        services.AddHangfireServer();
 
         services.AddStackExchangeRedisCache(options =>
         {
@@ -60,12 +85,14 @@ public static class DependencyInjection
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
 
+        // Register application services
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddScoped<SystemHealthJob>();
 
         return services;
     }
