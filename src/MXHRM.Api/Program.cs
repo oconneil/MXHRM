@@ -240,8 +240,16 @@ await IdentitySeeder.SeedRolesAsync(app.Services);
 // Configure recurring jobs
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 recurringJobManager.AddOrUpdate<SystemHealthJob>(
-    "system-health-job",
-    job => job.ExecuteAsync(),
-    Cron.Minutely);
+    "system-health-job",            // Unique ID for the job
+    job => job.ExecuteAsync(),      // method to execute
+    Cron.Minutely);                 // Run every minute for demonstration; adjust as needed in production
+
+// Get the cron expression for the refresh token cleanup job from configuration, with a default fallback
+var refreshTokenCleanupCron = builder.Configuration["RefreshTokenCleanup:Cron"]
+    ?? Cron.Daily(2); // Default to daily at 2 AM if not configured
+recurringJobManager.AddOrUpdate<CleanupExpiredRefreshTokensJob>(
+    "cleanup-expired-refresh-tokens",   // Unique ID for the job
+    job => job.ExecuteAsync(),          // method to execute
+    refreshTokenCleanupCron);           // Run based on the configured cron expression (default is daily at 2 AM)
 
 app.Run();

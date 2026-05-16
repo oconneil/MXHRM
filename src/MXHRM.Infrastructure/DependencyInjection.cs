@@ -93,6 +93,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICacheService, RedisCacheService>();
         services.AddScoped<SystemHealthJob>();
+        services.AddScoped<CleanupExpiredRefreshTokensJob>();
 
         return services;
     }
