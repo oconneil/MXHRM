@@ -14,4 +14,14 @@ public static class Permissions
     {
         public const string Manage = "role.manage";
     }
+
+    public static class Audit
+    {
+        public const string Read = "audit.read";
+    }
+
+    public static class Activity
+    {
+        public const string Read = "activity.read";
+    }
 }

@@ -9,7 +9,7 @@ namespace MXHRM.Api.Controllers;
 
 [ApiController]
 [Route("api/user-activity-logs")]
-[Authorize(Policy = Permissions.Role.Manage)]
+[Authorize(Policy = Permissions.Activity.Read)]
 public class UserActivityLogsController : BaseApiController
 {
     private readonly IUserActivityLogService _userActivityLogService;

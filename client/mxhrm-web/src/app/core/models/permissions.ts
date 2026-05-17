@@ -3,10 +3,15 @@ export const Permissions = {
     Read: 'employee.read',
     Create: 'employee.create',
     Update: 'employee.update',
-    Delete: 'employee.delete',
+    Delete: 'employee.delete'
   },
   Role: {
-    Manage: 'role.manage',
+    Manage: 'role.manage'
   },
+  Audit: {
+    Read: 'audit.read'
+  },
+  Activity: {
+    Read: 'activity.read'
+  }
 } as const;
-

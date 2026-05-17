@@ -34,13 +34,15 @@ public static class IdentitySeeder
     private static async Task SeedPermissionsAsync(AppDbContext db)
     {
         var permissionSeeds = new List<Permission>
-    {
-        new() { Code = AppPermissions.Employee.Read, Name = "Employee Read" },
-        new() { Code = AppPermissions.Employee.Create, Name = "Employee Create" },
-        new() { Code = AppPermissions.Employee.Update, Name = "Employee Update" },
-        new() { Code = AppPermissions.Employee.Delete, Name = "Employee Delete" },
-        new() { Code = AppPermissions.Role.Manage, Name = "Role Manage" }
-    };
+        {
+            new() { Code = AppPermissions.Employee.Read, Name = "Employee Read" },
+            new() { Code = AppPermissions.Employee.Create, Name = "Employee Create" },
+            new() { Code = AppPermissions.Employee.Update, Name = "Employee Update" },
+            new() { Code = AppPermissions.Employee.Delete, Name = "Employee Delete" },
+            new() { Code = AppPermissions.Role.Manage, Name = "Role Manage" },
+            new() { Code = AppPermissions.Audit.Read, Name = "Audit Read" },
+            new() { Code = AppPermissions.Activity.Read, Name = "Activity Read" }
+        };
 
         foreach (var p in permissionSeeds)
         {
@@ -68,22 +70,24 @@ public static class IdentitySeeder
         {
             [adminRole.Id] = new[]
             {
-            AppPermissions.Employee.Read,
-            AppPermissions.Employee.Create,
-            AppPermissions.Employee.Update,
-            AppPermissions.Employee.Delete,
-            AppPermissions.Role.Manage
-        },
+                AppPermissions.Employee.Read,
+                AppPermissions.Employee.Create,
+                AppPermissions.Employee.Update,
+                AppPermissions.Employee.Delete,
+                AppPermissions.Role.Manage,
+                AppPermissions.Audit.Read,
+                AppPermissions.Activity.Read
+            },
             [hrRole.Id] = new[]
             {
             AppPermissions.Employee.Read,
             AppPermissions.Employee.Create,
             AppPermissions.Employee.Update
-        },
+            },
             [employeeRole.Id] = new[]
             {
             AppPermissions.Employee.Read
-        }
+            }
         };
 
         foreach (var (roleId, permissionCodes) in map)
