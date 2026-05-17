@@ -17,6 +17,8 @@ using Hangfire;
 using MXHRM.Infrastructure.Jobs;
 using Hangfire.Dashboard;
 using MXHRM.Api.Hangfire;
+using MXHRM.Api.Services;
+using MXHRM.Application.Common.Interfaces;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +35,10 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .ReadFrom.Services(services)
         .Enrich.FromLogContext();
 });
+
+// Register the current user service to access user information in services and controllers
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddControllers();
 

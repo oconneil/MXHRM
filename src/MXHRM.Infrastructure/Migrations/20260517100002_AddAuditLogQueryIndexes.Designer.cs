@@ -4,6 +4,7 @@ using MXHRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MXHRM.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260517100002_AddAuditLogQueryIndexes")]
+    partial class AddAuditLogQueryIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,70 +161,6 @@ namespace MXHRM.Infrastructure.Migrations
                         .HasDatabaseName("IX_AuditLogs_UserId_CreatedAtUtc");
 
                     b.ToTable("AuditLogs", (string)null);
-                });
-
-            modelBuilder.Entity("MXHRM.Infrastructure.Auditing.UserActivityLog", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("ActivityType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Metadata")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TraceId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("UserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActivityType")
-                        .HasDatabaseName("IX_UserActivityLogs_ActivityType");
-
-                    b.HasIndex("CreatedAtUtc")
-                        .HasDatabaseName("IX_UserActivityLogs_CreatedAtUtc");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_UserActivityLogs_UserId");
-
-                    b.HasIndex("ActivityType", "CreatedAtUtc")
-                        .HasDatabaseName("IX_UserActivityLogs_ActivityType_CreatedAtUtc");
-
-                    b.HasIndex("UserId", "CreatedAtUtc")
-                        .HasDatabaseName("IX_UserActivityLogs_UserId_CreatedAtUtc");
-
-                    b.ToTable("UserActivityLogs", (string)null);
                 });
 
             modelBuilder.Entity("MXHRM.Infrastructure.Auth.RefreshToken", b =>

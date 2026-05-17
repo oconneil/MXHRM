@@ -20,7 +20,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-
+    public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -143,6 +143,83 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(x => x.UserId)
                 .HasDatabaseName("IX_AuditLogs_UserId");
+
+            entity.HasIndex(x => new
+            {
+                x.TableName,
+                x.CreatedAtUtc
+            })
+                .HasDatabaseName("IX_AuditLogs_TableName_CreatedAtUtc");
+
+            entity.HasIndex(x => new
+            {
+                x.UserId,
+                x.CreatedAtUtc
+            })
+                .HasDatabaseName("IX_AuditLogs_UserId_CreatedAtUtc");
+
+            entity.HasIndex(x => new
+            {
+                x.Action,
+                x.CreatedAtUtc
+            })
+                .HasDatabaseName("IX_AuditLogs_Action_CreatedAtUtc");
+        });
+
+        modelBuilder.Entity<UserActivityLog>(entity =>
+        {
+            entity.ToTable("UserActivityLogs");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.ActivityType)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(x => x.UserId)
+                .HasMaxLength(450);
+
+            entity.Property(x => x.UserName)
+                .HasMaxLength(256);
+
+            entity.Property(x => x.IpAddress)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.UserAgent)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.TraceId)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .IsRequired();
+
+            entity.HasIndex(x => x.ActivityType)
+                .HasDatabaseName("IX_UserActivityLogs_ActivityType");
+
+            entity.HasIndex(x => x.UserId)
+                .HasDatabaseName("IX_UserActivityLogs_UserId");
+
+            entity.HasIndex(x => x.CreatedAtUtc)
+                .HasDatabaseName("IX_UserActivityLogs_CreatedAtUtc");
+
+            entity.HasIndex(x => new
+            {
+                x.UserId,
+                x.CreatedAtUtc
+            })
+                .HasDatabaseName("IX_UserActivityLogs_UserId_CreatedAtUtc");
+
+            entity.HasIndex(x => new
+            {
+                x.ActivityType,
+                x.CreatedAtUtc
+            })
+                .HasDatabaseName("IX_UserActivityLogs_ActivityType_CreatedAtUtc");
         });
 
     }

@@ -9,6 +9,8 @@ using System.Text.Json;
 using MXHRM.Application.Common.Interfaces;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using MXHRM.Application.Auditing;
+using MXHRM.Application.Auditing.DTOs;
 
 namespace MXHRM.Infrastructure.Employees;
 
@@ -18,20 +20,26 @@ public class EmployeeService : IEmployeeService
     private readonly ILogger<EmployeeService> _logger;
     private readonly ICacheService _cache;
     private readonly IConfiguration _configuration;
-
+    private readonly IAuditLogService _auditLogService;
 
     public EmployeeService(
     AppDbContext db,
     ILogger<EmployeeService> logger,
     ICacheService cache,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    IAuditLogService auditLogService)
     {
         _db = db;
         _logger = logger;
         _cache = cache;
         _configuration = configuration;
+        _auditLogService = auditLogService;
     }
 
+    private static readonly JsonSerializerOptions AuditJsonOptions = new()
+    {
+        WriteIndented = false
+    };
 
     public async Task<PagedResponse<EmployeeResponse>> GetAllAsync(GetEmployeesRequest request)
     {
@@ -160,6 +168,26 @@ public class EmployeeService : IEmployeeService
         _db.Employees.Add(employee);
         await _db.SaveChangesAsync();
 
+        // Log the creation of the employee for auditing
+        await _auditLogService.LogAsync(new CreateAuditLogRequest
+        {
+            TableName = "Employees",
+            Action = "Insert",
+            KeyValues = GetEmployeeAuditKey(employee.CompanyID, employee.EmployeeID),
+            NewValues = SerializeAuditValue(ToResponse(employee)),
+            ChangedColumns = SerializeAuditValue(new[]
+            {
+                nameof(Employee.CompanyID),
+                nameof(Employee.EmployeeID),
+                nameof(Employee.FirstName),
+                nameof(Employee.LastName),
+                nameof(Employee.Email),
+                nameof(Employee.HireDate),
+                nameof(Employee.Salary),
+                nameof(Employee.IsActive)
+            })
+        });
+
         await ClearEmployeeCacheAsync(
             employee.CompanyID,
             employee.EmployeeID);
@@ -197,6 +225,9 @@ public class EmployeeService : IEmployeeService
             return false;
         }
 
+        var oldValues = ToResponse(employee);
+        var changedColumns = GetChangedColumns(employee, request);
+
         employee.FirstName = request.FirstName;
         employee.LastName = request.LastName;
         employee.Email = request.Email;
@@ -220,6 +251,18 @@ public class EmployeeService : IEmployeeService
                 "This employee was updated by another user. Please reload and try again.",
                 ex);
         }
+
+        var newValues = ToResponse(employee);
+
+        await _auditLogService.LogAsync(new CreateAuditLogRequest
+        {
+            TableName = "Employees",
+            Action = "Update",
+            KeyValues = GetEmployeeAuditKey(companyId, employeeId),
+            OldValues = SerializeAuditValue(oldValues),
+            NewValues = SerializeAuditValue(newValues),
+            ChangedColumns = changedColumns
+        });
 
         await ClearEmployeeCacheAsync(companyId, employeeId);
 
@@ -252,9 +295,30 @@ public class EmployeeService : IEmployeeService
             return false;
         }
 
+        var oldValues = ToResponse(employee);
+
         _db.Employees.Remove(employee);
         await _db.SaveChangesAsync();
 
+        await _auditLogService.LogAsync(new CreateAuditLogRequest
+        {
+            TableName = "Employees",
+            Action = "Delete",
+            KeyValues = GetEmployeeAuditKey(companyId, employeeId),
+            OldValues = SerializeAuditValue(oldValues),
+            ChangedColumns = SerializeAuditValue(new[]
+            {
+                nameof(Employee.CompanyID),
+                nameof(Employee.EmployeeID),
+                nameof(Employee.FirstName),
+                nameof(Employee.LastName),
+                nameof(Employee.Email),
+                nameof(Employee.HireDate),
+                nameof(Employee.Salary),
+                nameof(Employee.IsActive)
+            })
+        });
+        
         await ClearEmployeeCacheAsync(companyId, employeeId);
 
         _logger.LogInformation
@@ -414,6 +478,36 @@ public class EmployeeService : IEmployeeService
                 ? query.OrderByDescending(x => x.CompanyID).ThenByDescending(x => x.EmployeeID)
                 : query.OrderBy(x => x.CompanyID).ThenBy(x => x.EmployeeID)
         };
+    }
+
+    private static string SerializeAuditValue(object value)
+    {
+        return JsonSerializer.Serialize(value, AuditJsonOptions);
+    }
+
+    private static string GetEmployeeAuditKey(string companyId, string employeeId)
+    {
+        return SerializeAuditValue(new
+        {
+            CompanyID = companyId,
+            EmployeeID = employeeId
+        });
+    }
+
+    private static string GetChangedColumns(
+        Employee employee,
+        UpdateEmployeeRequest request)
+    {
+        var changedColumns = new List<string>();
+
+        if (employee.FirstName != request.FirstName) changedColumns.Add(nameof(Employee.FirstName));
+        if (employee.LastName != request.LastName) changedColumns.Add(nameof(Employee.LastName));
+        if (employee.Email != request.Email) changedColumns.Add(nameof(Employee.Email));
+        if (employee.HireDate != request.HireDate) changedColumns.Add(nameof(Employee.HireDate));
+        if (employee.Salary != request.Salary) changedColumns.Add(nameof(Employee.Salary));
+        if (employee.IsActive != request.IsActive) changedColumns.Add(nameof(Employee.IsActive));
+
+        return SerializeAuditValue(changedColumns);
     }
 
 }

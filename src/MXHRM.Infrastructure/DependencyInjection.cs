@@ -20,6 +20,8 @@ using StackExchange.Redis;
 using Hangfire;
 using Hangfire.SqlServer;
 using MXHRM.Infrastructure.Jobs;
+using MXHRM.Application.Auditing;
+using MXHRM.Infrastructure.Auditing;
 
 namespace MXHRM.Infrastructure;
 
@@ -95,6 +97,7 @@ public static class DependencyInjection
         services.AddScoped<SystemHealthJob>();
         services.AddScoped<CleanupExpiredRefreshTokensJob>();
         services.AddScoped<EmployeeReportJob>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
 
         return services;
     }
