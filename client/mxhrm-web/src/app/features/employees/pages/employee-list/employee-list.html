@@ -80,71 +80,54 @@
 
 @if (employees().length > 0) {
 <div class="card">
-  <div class="table-responsive">
-    <table class="table table-striped table-hover mb-0">
-      <thead class="table-dark">
-        <tr>
-          <th>Employee ID</th>
-          <th>Full Name</th>
-          <th>Email</th>
-          <th>Hire Date</th>
-          <th class="text-end">Salary</th>
-          <th>Active</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
+  <kendo-grid [data]="gridData()" [height]="520" [pageSize]="pageSize()" [skip]="(page() - 1) * pageSize()"
+    [pageable]="true" (pageChange)="onGridPageChange($event)">
+    <kendo-grid-column field="employeeID" title="Employee ID" [width]="140">
+    </kendo-grid-column>
 
-      <tbody>
-        @for (employee of employees(); track employee.companyID + '-' + employee.employeeID) {
-        <tr>
-          <td>{{ employee.employeeID }}</td>
-          <td>{{ employee.fullName }}</td>
-          <td>{{ employee.email }}</td>
-          <td>{{ employee.hireDate | date: 'dd/MM/yyyy' }}</td>
-          <td class="text-end">{{ employee.salary | number: '1.2-2' }}</td>
-          <td>
-            <span class="badge" [class.bg-success]="employee.isActive" [class.bg-secondary]="!employee.isActive">
-              {{ employee.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </td>
-          <td class="text-end">
-            @if (authService.hasPermission(employeeUpdatePermission)) {
-            <a class="btn btn-sm btn-outline-primary me-2"
-              [routerLink]="['/employees/edit', employee.companyID, employee.employeeID]">
-              Edit
-            </a>
-            }
+    <kendo-grid-column field="fullName" title="Full Name" [width]="220">
+    </kendo-grid-column>
 
-            @if (authService.hasPermission(employeeDeletePermission)) {
-            <button type="button" class="btn btn-sm btn-outline-danger"
-              (click)="deleteEmployee(employee.companyID, employee.employeeID)">
-              Delete
-            </button>
-            }
+    <kendo-grid-column field="email" title="Email" [width]="260">
+    </kendo-grid-column>
 
-          </td>
-        </tr>
+    <kendo-grid-column field="hireDate" title="Hire Date" [width]="150">
+      <ng-template kendoGridCellTemplate let-dataItem>
+        {{ dataItem.hireDate | date: 'dd/MM/yyyy' }}
+      </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="salary" title="Salary" [width]="140" class="text-end">
+      <ng-template kendoGridCellTemplate let-dataItem>
+        {{ dataItem.salary | number: '1.2-2' }}
+      </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="isActive" title="Active" [width]="120">
+      <ng-template kendoGridCellTemplate let-dataItem>
+        <span class="badge" [class.bg-success]="dataItem.isActive" [class.bg-secondary]="!dataItem.isActive">
+          {{ dataItem.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column title="Actions" [width]="180">
+      <ng-template kendoGridCellTemplate let-dataItem>
+        @if (authService.hasPermission(employeeUpdatePermission)) {
+        <a class="btn btn-sm btn-outline-primary me-2"
+          [routerLink]="['/employees/edit', dataItem.companyID, dataItem.employeeID]">
+          Edit
+        </a>
         }
-      </tbody>
-    </table>
-  </div>
 
-  <div class="card-footer d-flex justify-content-between align-items-center">
-    <span>Total: {{ totalItems() }}</span>
-
-    <div>
-      <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="previousPage()"
-        [disabled]="page() <= 1">
-        Previous
-      </button>
-
-      <span>Page {{ page() }} / {{ totalPages() }}</span>
-
-      <button type="button" class="btn btn-sm btn-outline-secondary ms-2" (click)="nextPage()"
-        [disabled]="page() >= totalPages()">
-        Next
-      </button>
-    </div>
-  </div>
+        @if (authService.hasPermission(employeeDeletePermission)) {
+        <button type="button" class="btn btn-sm btn-outline-danger"
+          (click)="deleteEmployee(dataItem.companyID, dataItem.employeeID)">
+          Delete
+        </button>
+        }
+      </ng-template>
+    </kendo-grid-column>
+  </kendo-grid>
 </div>
 }
