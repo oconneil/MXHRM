@@ -98,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<CleanupExpiredRefreshTokensJob>();
         services.AddScoped<EmployeeReportJob>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IUserActivityLogService, UserActivityLogService>();
 
         return services;
     }

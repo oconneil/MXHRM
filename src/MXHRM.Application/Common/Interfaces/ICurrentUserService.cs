@@ -8,5 +8,9 @@ public interface ICurrentUserService
 
     string? TraceId { get; }
 
+    string? IpAddress { get; }
+
+    string? UserAgent { get; }
+
     bool IsAuthenticated { get; }
 }

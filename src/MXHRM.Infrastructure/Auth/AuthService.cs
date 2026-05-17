@@ -11,6 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using MXHRM.Infrastructure.Data;
 using MXHRM.Application.Authorization;
 using MXHRM.Application.Auth;
+using System.Text.Json;
+using MXHRM.Application.Auditing;
+using MXHRM.Application.Auditing.DTOs;
 
 namespace MXHRM.Infrastructure.Auth;
 
@@ -19,15 +22,23 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly AppDbContext _db;
+    private readonly IUserActivityLogService _userActivityLogService;
 
     public AuthService(
     UserManager<ApplicationUser> userManager,
     IConfiguration configuration,
-    AppDbContext db)
+    AppDbContext db,
+    IUserActivityLogService userActivityLogService)
     {
         _userManager = userManager;
         _configuration = configuration;
         _db = db;
+        _userActivityLogService = userActivityLogService;
+    }
+
+    private static string SerializeActivityMetadata(object value)
+    {
+        return JsonSerializer.Serialize(value);
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -63,15 +74,67 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByNameAsync(request.UserName);
 
         if (user is null)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "LoginFailed",
+                Description = "Login failed because username was not found.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    request.UserName,
+                    Reason = "UserNotFound"
+                })
+            });
+
             throw new UnauthorizedAccessException("Invalid username or password.");
+        }
 
         if (!user.IsActive)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "LoginFailed",
+                Description = "Login failed because user is inactive.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    UserId = user.Id,
+                    user.UserName,
+                    Reason = "InactiveUser"
+                })
+            });
+
             throw new UnauthorizedAccessException("User is inactive.");
+        }
 
         var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
 
         if (!isPasswordValid)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "LoginFailed",
+                Description = "Login failed because password was invalid.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    UserId = user.Id,
+                    user.UserName,
+                    Reason = "InvalidPassword"
+                })
+            });
+
             throw new UnauthorizedAccessException("Invalid username or password.");
+        }
+
+        await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+        {
+            ActivityType = "LoginSuccess",
+            Description = "User logged in successfully.",
+            Metadata = SerializeActivityMetadata(new
+            {
+                UserId = user.Id,
+                user.UserName
+            })
+        });
 
         return await GenerateAuthResponseAsync(user);
     }
@@ -82,11 +145,33 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync(x => x.Token == request.RefreshToken);
 
         if (refreshToken is null)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "LogoutFailed",
+                Description = "Logout failed because refresh token was not found.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    Reason = "RefreshTokenNotFound"
+                })
+            });
+
             return;
+        }
 
         refreshToken.RevokedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        
+        await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+        {
+            ActivityType = "Logout",
+            Description = "User logged out.",
+            Metadata = SerializeActivityMetadata(new
+            {
+                refreshToken.UserId
+            })
+        });
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
@@ -95,12 +180,48 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync(x => x.Token == request.RefreshToken);
 
         if (refreshToken is null || !refreshToken.IsActive)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "RefreshTokenFailed",
+                Description = "Refresh token failed because token was invalid or inactive.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    Reason = "InvalidOrInactiveRefreshToken"
+                })
+            });
+
             throw new UnauthorizedAccessException("Invalid refresh token.");
+        }
 
         var user = await _userManager.FindByIdAsync(refreshToken.UserId);
 
         if (user is null || !user.IsActive)
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "RefreshTokenFailed",
+                Description = "Refresh token failed because user was invalid or inactive.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    UserId = refreshToken.UserId,
+                    Reason = "InvalidOrInactiveUser"
+                })
+            });
+
             throw new UnauthorizedAccessException("Invalid user.");
+        }
+
+        await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+        {
+            ActivityType = "RefreshToken",
+            Description = "User refreshed access token.",
+            Metadata = SerializeActivityMetadata(new
+            {
+                UserId = user.Id,
+                user.UserName
+            })
+        });
 
         refreshToken.RevokedAt = DateTime.UtcNow;
 
