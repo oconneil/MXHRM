@@ -6,7 +6,12 @@ import { EmployeeService } from '../../services/employee';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth';
 import { Permissions } from '../../../../core/models/permissions';
-import { GridDataResult, KENDO_GRID, PageChangeEvent } from '@progress/kendo-angular-grid';
+import {
+  DataStateChangeEvent,
+  GridDataResult,
+  KENDO_GRID
+} from '@progress/kendo-angular-grid';
+import { State } from '@progress/kendo-data-query';
 
 @Component({
   selector: 'app-employee-list',
@@ -37,6 +42,17 @@ export class EmployeeList implements OnInit {
   sortBy = signal('employeeId');
   sortDirection = signal<'asc' | 'desc'>('asc');
 
+  gridState = signal<State>({
+    skip: 0,
+    take: 10,
+    sort: [
+      {
+        field: 'employeeID',
+        dir: 'asc'
+      }
+    ]
+  });
+
   readonly authService = inject(AuthService);
 
   constructor(private readonly employeeService: EmployeeService) { }
@@ -49,21 +65,35 @@ export class EmployeeList implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
+    const state = this.gridState();
+    const sort = state.sort?.[0];
+
+    const take = state.take ?? this.pageSize();
+    const skip = state.skip ?? 0;
+
+    const pageSize = take;
+    const page = Math.floor(skip / take) + 1;
+
+    const sortBy = this.mapGridFieldToApiSort(sort?.field);
+    const sortDirection = sort?.dir === 'desc' ? 'desc' : 'asc';
+
     this.employeeService
       .getEmployees({
         search: this.search(),
         companyID: this.companyID(),
         isActive: this.isActive(),
-        sortBy: this.sortBy(),
-        sortDirection: this.sortDirection(),
-        page: this.page(),
-        pageSize: this.pageSize()
+        sortBy,
+        sortDirection,
+        page,
+        pageSize
       })
       .subscribe({
         next: (res: PagedResponse<EmployeeResponse>) => {
           this.employees.set(res.items);
           this.totalItems.set(res.totalItems);
           this.totalPages.set(res.totalPages);
+          this.page.set(res.page);
+          this.pageSize.set(res.pageSize);
           this.loading.set(false);
         },
         error: () => {
@@ -92,6 +122,11 @@ export class EmployeeList implements OnInit {
   }
 
   applyFilters(): void {
+    this.gridState.update(state => ({
+      ...state,
+      skip: 0
+    }));
+
     this.page.set(1);
     this.loadEmployees();
   }
@@ -103,6 +138,18 @@ export class EmployeeList implements OnInit {
     this.sortBy.set('employeeId');
     this.sortDirection.set('asc');
     this.page.set(1);
+
+    this.gridState.set({
+      skip: 0,
+      take: 10,
+      sort: [
+        {
+          field: 'employeeID',
+          dir: 'asc'
+        }
+      ]
+    });
+
     this.loadEmployees();
   }
 
@@ -129,9 +176,27 @@ export class EmployeeList implements OnInit {
     });
   }
 
-  onGridPageChange(event: PageChangeEvent): void {
-    this.page.set(event.skip / event.take + 1);
-    this.pageSize.set(event.take);
+  onGridStateChange(state: DataStateChangeEvent): void {
+    this.gridState.set(state);
     this.loadEmployees();
+  }
+
+  private mapGridFieldToApiSort(field?: string): string {
+    switch (field) {
+      case 'employeeID':
+        return 'employeeId';
+      case 'firstName':
+        return 'firstName';
+      case 'lastName':
+        return 'lastName';
+      case 'email':
+        return 'email';
+      case 'hireDate':
+        return 'hireDate';
+      case 'salary':
+        return 'salary';
+      default:
+        return 'employeeId';
+    }
   }
 }

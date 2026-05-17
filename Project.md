@@ -1233,3 +1233,9 @@ ASPNETCORE_ENVIRONMENT=Development dotnet ef database update \
   --project src/MXHRM.Infrastructure \
   --startup-project src/MXHRM.Api
   
+//Telerik Nuget
+dotnet nuget add source https://nuget.telerik.com/v3/index.json \
+  --name telerik \
+  --username YOUR_TELERIK_EMAIL \
+  --password YOUR_TELERIK_API_KEY \
+  --store-password-in-clear-text

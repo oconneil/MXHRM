@@ -80,8 +80,8 @@
 
 @if (employees().length > 0) {
 <div class="card">
-  <kendo-grid [data]="gridData()" [height]="520" [pageSize]="pageSize()" [skip]="(page() - 1) * pageSize()"
-    [pageable]="true" (pageChange)="onGridPageChange($event)">
+  <kendo-grid [data]="gridData()" [height]="520" [pageSize]="gridState().take" [skip]="gridState().skip"
+    [sort]="gridState().sort" [pageable]="true" [sortable]="true" (dataStateChange)="onGridStateChange($event)">
     <kendo-grid-column field="employeeID" title="Employee ID" [width]="140">
     </kendo-grid-column>
 
