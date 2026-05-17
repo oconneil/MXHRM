@@ -30,4 +30,17 @@ public class JobsController : BaseApiController
             Message = "Refresh token cleanup job has been queued."
         });
     }
+
+    [HttpPost("employee-summary-report")]
+    public IActionResult GenerateEmployeeSummaryReport()
+    {
+        var jobId = _backgroundJobClient.Enqueue<EmployeeReportJob>(
+            job => job.ExecuteAsync());
+
+        return Accepted(new
+        {
+            JobId = jobId,
+            Message = "Employee summary report job has been queued."
+        });
+    }
 }

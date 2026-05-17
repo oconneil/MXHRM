@@ -252,4 +252,12 @@ recurringJobManager.AddOrUpdate<CleanupExpiredRefreshTokensJob>(
     job => job.ExecuteAsync(),          // method to execute
     refreshTokenCleanupCron);           // Run based on the configured cron expression (default is daily at 2 AM)
 
+// Get the cron expression for the employee report job from configuration, with a default fallback
+var employeeReportCron = builder.Configuration["EmployeeReport:Cron"]
+    ?? Cron.Daily(6);
+recurringJobManager.AddOrUpdate<EmployeeReportJob>(
+    "employee-summary-report",
+    job => job.ExecuteAsync(),
+    employeeReportCron);
+
 app.Run();
