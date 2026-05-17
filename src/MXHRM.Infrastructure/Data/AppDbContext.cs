@@ -4,6 +4,7 @@ using MXHRM.Domain.Employees;
 using MXHRM.Infrastructure.Auth;
 using MXHRM.Infrastructure.Authorization;
 using MXHRM.Infrastructure.Identity;
+using MXHRM.Infrastructure.Auditing;
 
 namespace MXHRM.Infrastructure.Data;
 
@@ -18,6 +19,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -105,6 +107,42 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(x => x.RolePermissions)
                 .HasForeignKey(x => x.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TableName)
+                .HasMaxLength(128)
+                .IsRequired();
+
+            entity.Property(x => x.Action)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.UserId)
+                .HasMaxLength(450);
+
+            entity.Property(x => x.UserName)
+                .HasMaxLength(256);
+
+            entity.Property(x => x.TraceId)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .IsRequired();
+
+            entity.HasIndex(x => x.TableName)
+                .HasDatabaseName("IX_AuditLogs_TableName");
+
+            entity.HasIndex(x => x.CreatedAtUtc)
+                .HasDatabaseName("IX_AuditLogs_CreatedAtUtc");
+
+            entity.HasIndex(x => x.UserId)
+                .HasDatabaseName("IX_AuditLogs_UserId");
         });
 
     }
