@@ -9,7 +9,7 @@ namespace MXHRM.Api.Controllers;
 
 [ApiController]
 [Route("api/audit-logs")]
-[Authorize(Policy = Permissions.Role.Manage)]
+[Authorize(Policy = Permissions.Audit.Read)]
 public class AuditLogsController : BaseApiController
 {
     private readonly IAuditLogService _auditLogService;
