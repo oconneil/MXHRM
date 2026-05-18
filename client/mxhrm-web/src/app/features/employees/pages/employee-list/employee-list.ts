@@ -11,7 +11,11 @@ import {
   GridDataResult,
   KENDO_GRID
 } from '@progress/kendo-angular-grid';
-import { State } from '@progress/kendo-data-query';
+import {
+  CompositeFilterDescriptor,
+  FilterDescriptor,
+  State
+} from '@progress/kendo-data-query';
 
 @Component({
   selector: 'app-employee-list',
@@ -78,22 +82,19 @@ export class EmployeeList implements OnInit {
     const sortDirection = sort?.dir === 'desc' ? 'desc' : 'asc';
 
     this.employeeService
-      .getEmployees({
-        search: this.search(),
-        companyID: this.companyID(),
-        isActive: this.isActive(),
-        sortBy,
-        sortDirection,
-        page,
-        pageSize
-      })
+      .getEmployeesGrid(this.buildGridState())
       .subscribe({
-        next: (res: PagedResponse<EmployeeResponse>) => {
-          this.employees.set(res.items);
-          this.totalItems.set(res.totalItems);
-          this.totalPages.set(res.totalPages);
-          this.page.set(res.page);
-          this.pageSize.set(res.pageSize);
+        next: (res: GridDataResult) => {
+          this.employees.set(res.data as EmployeeResponse[]);
+          this.totalItems.set(res.total);
+
+          const state = this.gridState();
+          const take = state.take ?? 10;
+          const skip = state.skip ?? 0;
+
+          this.page.set(Math.floor(skip / take) + 1);
+          this.pageSize.set(take);
+
           this.loading.set(false);
         },
         error: () => {
@@ -198,5 +199,49 @@ export class EmployeeList implements OnInit {
       default:
         return 'employeeId';
     }
+  }
+
+  private buildGridState(): State {
+    const filters: Array<FilterDescriptor | CompositeFilterDescriptor> = [];
+
+    if (this.search().trim()) {
+      const search = this.search().trim();
+
+      filters.push({
+        logic: 'or',
+        filters: [
+          { field: 'employeeID', operator: 'contains', value: search },
+          { field: 'firstName', operator: 'contains', value: search },
+          { field: 'lastName', operator: 'contains', value: search },
+          { field: 'email', operator: 'contains', value: search }
+        ]
+      });
+    }
+
+    if (this.companyID().trim()) {
+      filters.push({
+        field: 'companyID',
+        operator: 'eq',
+        value: this.companyID().trim()
+      });
+    }
+
+    if (this.isActive() !== null) {
+      filters.push({
+        field: 'isActive',
+        operator: 'eq',
+        value: this.isActive()
+      });
+    }
+
+    return {
+      ...this.gridState(),
+      filter: filters.length
+        ? {
+          logic: 'and',
+          filters
+        }
+        : undefined
+    };
   }
 }

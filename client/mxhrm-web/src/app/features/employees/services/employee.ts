@@ -9,6 +9,8 @@ import {
   PagedResponse,
   UpdateEmployeeRequest
 } from '../models/employee';
+import { GridDataResult } from '@progress/kendo-angular-grid';
+import { State, toDataSourceRequestString } from '@progress/kendo-data-query';
 
 @Injectable({
   providedIn: 'root'
@@ -64,5 +66,14 @@ export class EmployeeService {
 
   deleteEmployee(companyID: string, employeeID: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${companyID}/${employeeID}`);
+  }
+
+  getEmployeesGrid(state: State): Observable<GridDataResult> {
+    const queryString = toDataSourceRequestString(state);
+
+    return this.http.post<GridDataResult>(
+      `${this.apiUrl}/grid?${queryString}`,
+      {}
+    );
   }
 }
