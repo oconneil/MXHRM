@@ -16,10 +16,11 @@ import {
   FilterDescriptor,
   State
 } from '@progress/kendo-data-query';
+import { KENDO_BUTTONS } from '@progress/kendo-angular-buttons';
 
 @Component({
   selector: 'app-employee-list',
-  imports: [CommonModule, FormsModule, RouterLink, KENDO_GRID],
+  imports: [CommonModule, FormsModule, RouterLink, KENDO_GRID, KENDO_BUTTONS],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.scss'
 })
@@ -243,5 +244,13 @@ export class EmployeeList implements OnInit {
         }
         : undefined
     };
+  }
+
+  refreshGrid(): void {
+    this.loadEmployees();
+  }
+
+  clearGridState(): void {
+    this.resetFilters();
   }
 }

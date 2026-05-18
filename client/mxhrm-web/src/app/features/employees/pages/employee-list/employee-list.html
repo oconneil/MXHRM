@@ -1,11 +1,5 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3 mb-0">Employees</h1>
-
-  @if (authService.hasPermission(employeeCreatePermission)) {
-  <a class="btn btn-primary" routerLink="/employees/create">
-    Create Employee
-  </a>
-  }
 </div>
 
 <div class="card mb-3">
@@ -81,7 +75,34 @@
 @if (employees().length > 0) {
 <div class="card">
   <kendo-grid [data]="gridData()" [height]="520" [pageSize]="gridState().take" [skip]="gridState().skip"
-    [sort]="gridState().sort" [pageable]="true" [sortable]="true" (dataStateChange)="onGridStateChange($event)">
+    [sort]="gridState().sort" [pageable]="true" [sortable]="true" [loading]="loading()"
+    (dataStateChange)="onGridStateChange($event)">
+    <ng-template kendoGridToolbarTemplate>
+      <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between w-100">
+        <div>
+          <strong>Employee Directory</strong>
+          <span class="text-muted ms-2">
+            {{ totalItems() }} records
+          </span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button kendoButton type="button" fillMode="outline" (click)="refreshGrid()">
+            Refresh
+          </button>
+
+          <button kendoButton type="button" fillMode="outline" (click)="clearGridState()">
+            Clear Filters
+          </button>
+
+          @if (authService.hasPermission(employeeCreatePermission)) {
+          <a kendoButton themeColor="primary" routerLink="/employees/create">
+            Create Employee
+          </a>
+          }
+        </div>
+      </div>
+    </ng-template>
     <kendo-grid-column field="employeeID" title="Employee ID" [width]="140">
     </kendo-grid-column>
 
@@ -114,20 +135,28 @@
     <kendo-grid-column title="Actions" [width]="180">
       <ng-template kendoGridCellTemplate let-dataItem>
         @if (authService.hasPermission(employeeUpdatePermission)) {
-        <a class="btn btn-sm btn-outline-primary me-2"
+        <a kendoButton size="small" fillMode="outline"
           [routerLink]="['/employees/edit', dataItem.companyID, dataItem.employeeID]">
           Edit
         </a>
         }
 
         @if (authService.hasPermission(employeeDeletePermission)) {
-        <button type="button" class="btn btn-sm btn-outline-danger"
+        <button kendoButton size="small" fillMode="outline" themeColor="error" type="button"
           (click)="deleteEmployee(dataItem.companyID, dataItem.employeeID)">
           Delete
         </button>
         }
       </ng-template>
     </kendo-grid-column>
+    <ng-template kendoGridNoRecordsTemplate>
+      <div class="text-center py-5">
+        <h5 class="mb-2">No employees found</h5>
+        <p class="text-muted mb-0">
+          Try changing search, filters, or sorting.
+        </p>
+      </div>
+    </ng-template>
   </kendo-grid>
 </div>
 }

@@ -1,0 +1,132 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Roles Management</h1>
+    <p class="text-muted mb-0">
+      Manage application roles and role permissions.
+    </p>
+  </div>
+
+  <button kendoButton type="button" fillMode="outline" (click)="loadRoles()">
+    Refresh
+  </button>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+<div class="card mb-3">
+  <div class="card-body">
+    <label class="form-label">Create New Role</label>
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Role name"
+        [ngModel]="newRoleName()"
+        (ngModelChange)="newRoleName.set($event)"
+        (keyup.enter)="createRole()"
+      />
+
+      <button
+        kendoButton
+        themeColor="primary"
+        type="button"
+        (click)="createRole()"
+        [disabled]="!newRoleName().trim() || loading()"
+      >
+        Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<kendo-grid
+  [data]="roles()"
+  [height]="520"
+  [loading]="loading()"
+>
+  <kendo-grid-column field="name" title="Role Name">
+    <ng-template kendoGridCellTemplate let-dataItem>
+      @if (editingRoleId() === dataItem.id) {
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        [ngModel]="editingRoleName()"
+        (ngModelChange)="editingRoleName.set($event)"
+        (keyup.enter)="saveRole(dataItem)"
+      />
+      } @else {
+      <strong>{{ dataItem.name }}</strong>
+
+      @if (isProtectedRole(dataItem.name)) {
+      <span class="badge bg-secondary ms-2">Protected</span>
+      }
+      }
+    </ng-template>
+  </kendo-grid-column>
+
+  <kendo-grid-column field="id" title="Role ID" [width]="320">
+  </kendo-grid-column>
+
+  <kendo-grid-column title="Actions" [width]="360">
+    <ng-template kendoGridCellTemplate let-dataItem>
+      @if (editingRoleId() === dataItem.id) {
+      <button
+        kendoButton
+        size="small"
+        themeColor="primary"
+        type="button"
+        class="me-2"
+        (click)="saveRole(dataItem)"
+      >
+        Save
+      </button>
+
+      <button
+        kendoButton
+        size="small"
+        fillMode="outline"
+        type="button"
+        (click)="cancelEdit()"
+      >
+        Cancel
+      </button>
+      } @else {
+      <a
+        kendoButton
+        size="small"
+        fillMode="outline"
+        class="me-2"
+        [routerLink]="['/security-admin/roles', dataItem.id, 'permissions']"
+      >
+        Permissions
+      </a>
+
+      <button
+        kendoButton
+        size="small"
+        fillMode="outline"
+        type="button"
+        class="me-2"
+        (click)="startEdit(dataItem)"
+        [disabled]="isProtectedRole(dataItem.name)"
+      >
+        Edit
+      </button>
+
+      <button
+        kendoButton
+        size="small"
+        fillMode="outline"
+        themeColor="error"
+        type="button"
+        (click)="deleteRole(dataItem)"
+        [disabled]="isProtectedRole(dataItem.name)"
+      >
+        Delete
+      </button>
+      }
+    </ng-template>
+  </kendo-grid-column>
+</kendo-grid>

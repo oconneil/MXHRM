@@ -1,0 +1,104 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.shell {
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+.shell-appbar {
+  border-bottom: 1px solid #dde3ea;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 8%);
+  z-index: 10;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.brand-name {
+  color: #1f2937;
+  font-size: 1.05rem;
+}
+
+.user-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #334155;
+  font-weight: 500;
+  max-width: 220px;
+}
+
+.user-summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-body {
+  min-height: calc(100vh - 57px);
+}
+
+:host ::ng-deep .k-drawer {
+  border-right: 1px solid #dde3ea;
+  background: #fff;
+}
+
+:host ::ng-deep .k-drawer-item {
+  min-height: 48px;
+}
+
+:host ::ng-deep .k-drawer-item.k-selected {
+  color: #0f766e;
+  background: #e6f4f1;
+}
+
+.drawer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.drawer-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.shell-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+  .brand-name,
+  .user-summary {
+    display: none;
+  }
+
+  .shell-content {
+    padding: 1rem;
+  }
+}

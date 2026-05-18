@@ -1,0 +1,73 @@
+<div class="shell">
+  <kendo-appbar position="top" positionMode="sticky" themeColor="light" class="shell-appbar">
+    <kendo-appbar-section>
+      <button
+        kendoButton
+        type="button"
+        fillMode="flat"
+        [svgIcon]="menuIcon"
+        aria-label="Toggle navigation"
+        (click)="toggleDrawer()">
+      </button>
+    </kendo-appbar-section>
+
+    <kendo-appbar-section>
+      <div class="brand">
+        <span class="brand-mark">MX</span>
+        <span class="brand-name">MXHRM</span>
+      </div>
+    </kendo-appbar-section>
+
+    <kendo-appbar-spacer />
+
+    @if (authService.currentUser(); as user) {
+    <kendo-appbar-section>
+      <div class="user-summary">
+        <kendo-svg-icon [icon]="userIcon" />
+        <span>{{ user.displayName }}</span>
+      </div>
+    </kendo-appbar-section>
+    }
+
+    <kendo-appbar-section>
+      <button
+        kendoButton
+        type="button"
+        fillMode="outline"
+        themeColor="base"
+        [svgIcon]="logoutIcon"
+        (click)="logout()">
+        Logout
+      </button>
+    </kendo-appbar-section>
+  </kendo-appbar>
+
+  <kendo-drawer-container class="shell-body">
+    <kendo-drawer
+      mode="push"
+      [mini]="true"
+      [width]="260"
+      [miniWidth]="64"
+      [expanded]="expanded()"
+      [items]="drawerItems()"
+      [autoCollapse]="false"
+      (select)="onDrawerSelect($event)">
+      <ng-template kendoDrawerItemTemplate let-item>
+        <div class="drawer-item">
+          @if (item.svgIcon) {
+          <kendo-svg-icon [icon]="item.svgIcon" />
+          }
+          <span class="drawer-item-text">{{ item.text }}</span>
+        </div>
+      </ng-template>
+    </kendo-drawer>
+
+    <kendo-drawer-content>
+      <app-global-error-alert />
+
+      <main class="shell-content">
+        <router-outlet />
+      </main>
+    </kendo-drawer-content>
+  </kendo-drawer-container>
+</div>

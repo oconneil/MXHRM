@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using MXHRM.Application.Authorization;
 using MXHRM.Application.Common;
 using MXHRM.Application.Employees.DTOs;
+using Kendo.Mvc.Extensions;
+using Kendo.Mvc.UI;
+using MXHRM.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace MXHRM.Api.Controllers;
 
@@ -13,10 +17,14 @@ namespace MXHRM.Api.Controllers;
 public class EmployeesController : BaseApiController
 {
     private readonly IEmployeeService _employeeService;
+    private readonly AppDbContext _db;
 
-    public EmployeesController(IEmployeeService employeeService)
+    public EmployeesController(
+        IEmployeeService employeeService,
+        AppDbContext db)
     {
         _employeeService = employeeService;
+        _db = db;
     }
 
     [HttpGet]
@@ -95,6 +103,31 @@ public class EmployeesController : BaseApiController
             return NotFoundError("Employee not found.");
 
         return NoContent();
+    }
+
+    [HttpPost("grid")]
+    [Authorize(Policy = Permissions.Employee.Read)]
+    public async Task<IActionResult> GetGrid([DataSourceRequest] DataSourceRequest request)
+    {
+        var query = _db.Employees
+            .AsNoTracking()
+            .Select(x => new
+            {
+                x.CompanyID,
+                x.EmployeeID,
+                x.FirstName,
+                x.LastName,
+                FullName = x.FirstName + " " + x.LastName,
+                x.Email,
+                x.HireDate,
+                x.Salary,
+                x.IsActive,
+                x.RowVersion
+            });
+
+        var result = await query.ToDataSourceResultAsync(request);
+
+        return Ok(result);
     }
 
     [HttpGet("test-error")]
