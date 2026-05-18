@@ -1,0 +1,53 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Role Permissions</h1>
+        <p class="text-muted mb-0">
+            Manage permissions for role:
+            <strong>{{ roleName() || roleId }}</strong>
+        </p>
+    </div>
+
+    <a kendoButton fillMode="outline" routerLink="/security-admin/roles">
+        Back to Roles
+    </a>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (successMessage()) {
+<div class="alert alert-success">{{ successMessage() }}</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="h5 mb-1">Permissions</h2>
+                <p class="text-muted mb-0">
+                    Select permissions assigned to this role.
+                </p>
+            </div>
+
+            <button kendoButton themeColor="primary" type="button" (click)="save()" [disabled]="loading() || saving()">
+                Save Permissions
+            </button>
+        </div>
+
+        <kendo-grid [data]="allPermissions()" [height]="560" [loading]="loading()">
+            <kendo-grid-column title="" [width]="80">
+                <ng-template kendoGridCellTemplate let-dataItem>
+                    <input class="form-check-input" type="checkbox" [checked]="isSelected(dataItem.id)"
+                        (change)="togglePermission(dataItem.id, $any($event.target).checked)" />
+                </ng-template>
+            </kendo-grid-column>
+
+            <kendo-grid-column field="code" title="Permission Code">
+            </kendo-grid-column>
+
+            <kendo-grid-column field="name" title="Permission Name">
+            </kendo-grid-column>
+        </kendo-grid>
+    </div>
+</div>

@@ -6,6 +6,7 @@ import { EmployeeList } from './features/employees/pages/employee-list/employee-
 import { EmployeeCreate } from './features/employees/pages/employee-create/employee-create';
 import { EmployeeEdit } from './features/employees/pages/employee-edit/employee-edit';
 import { RolesManagement } from './features/security-admin/pages/roles-management/roles-management';
+import { RolePermissionsManagement } from './features/security-admin/pages/role-permissions-management/role-permissions-management';
 
 export const routes: Routes = [
   {
@@ -37,6 +38,9 @@ export const routes: Routes = [
       {
         path: 'security-admin/roles',
         component: RolesManagement
+      }, {
+        path: 'security-admin/roles/:roleId/permissions',
+        component: RolePermissionsManagement
       }
     ]
   }
