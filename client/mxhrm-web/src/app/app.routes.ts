@@ -11,6 +11,8 @@ import { UsersManagement } from './features/security-admin/pages/users-managemen
 import { UserRolesManagement } from './features/security-admin/pages/user-roles-management/user-roles-management';
 import { AuditLogs } from './features/security-admin/pages/audit-logs/audit-logs';
 import { UserActivityLogs } from './features/security-admin/pages/user-activity-logs/user-activity-logs';
+import { permissionGuard } from './core/guards/permission-guard';
+import { Permissions } from './core/models/permissions';
 
 export const routes: Routes = [
   {
@@ -41,27 +43,51 @@ export const routes: Routes = [
       },
       {
         path: 'security-admin/roles',
-        component: RolesManagement
+        component: RolesManagement,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Role.Manage
+        }
       },
       {
         path: 'security-admin/roles/:roleId/permissions',
-        component: RolePermissionsManagement
+        component: RolePermissionsManagement,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Role.Manage
+        }
       },
       {
         path: 'security-admin/users',
-        component: UsersManagement
+        component: UsersManagement,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Role.Manage
+        }
       },
       {
         path: 'security-admin/users/:userId/roles',
-        component: UserRolesManagement
+        component: UserRolesManagement,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Role.Manage
+        }
       },
       {
         path: 'security-admin/audit-logs',
-        component: AuditLogs
+        component: AuditLogs,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Audit.Read
+        }
       },
       {
         path: 'security-admin/user-activity-logs',
-        component: UserActivityLogs
+        component: UserActivityLogs,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Activity.Read
+        }
       }
     ]
   }
