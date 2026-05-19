@@ -8,6 +8,8 @@ using MXHRM.Application.Employees.DTOs;
 // using Kendo.Mvc.UI;
 using MXHRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using MXHRM.Api.Common.Grid;
+using MXHRM.Infrastructure.Common.Grid;
 
 namespace MXHRM.Api.Controllers;
 
@@ -105,30 +107,30 @@ public class EmployeesController : BaseApiController
         return NoContent();
     }
 
-    // [HttpPost("grid")]
-    // [Authorize(Policy = Permissions.Employee.Read)]
-    // public async Task<IActionResult> GetGrid([DataSourceRequest] DataSourceRequest request)
-    // {
-    //     var query = _db.Employees
-    //         .AsNoTracking()
-    //         .Select(x => new
-    //         {
-    //             x.CompanyID,
-    //             x.EmployeeID,
-    //             x.FirstName,
-    //             x.LastName,
-    //             FullName = x.FirstName + " " + x.LastName,
-    //             x.Email,
-    //             x.HireDate,
-    //             x.Salary,
-    //             x.IsActive,
-    //             x.RowVersion
-    //         });
+    [HttpPost("grid")]
+    public async Task<IActionResult> Grid(CancellationToken cancellationToken)
+    {
+        var request = GridDataSourceRequestParser.FromQuery(Request.Query);
 
-    //     var result = await query.ToDataSourceResultAsync(request);
+        var query = _db.Employees
+            .AsNoTracking()
+            .Select(employee => new EmployeeResponse
+            {
+                CompanyID = employee.CompanyID,
+                EmployeeID = employee.EmployeeID,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                FullName = $"{employee.FirstName} {employee.LastName}",
+                Email = employee.Email,
+                HireDate = employee.HireDate,
+                Salary = employee.Salary,
+                IsActive = employee.IsActive
+            });
 
-    //     return Ok(result);
-    // }
+        var result = await query.ToGridDataSourceResultAsync(request, cancellationToken);
+
+        return Ok(result);
+    }
 
     [HttpGet("test-error")]
     public IActionResult TestError()
