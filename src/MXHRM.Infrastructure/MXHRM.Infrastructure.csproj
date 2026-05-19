@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.7" />
     <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <PackageReference Include="Telerik.UI.for.AspNet.Core" Version="2026.1.415" />
   </ItemGroup>
 
   <PropertyGroup>
