@@ -44,3 +44,40 @@ export interface UserRoleResponse {
 export interface UpdateUserRolesRequest {
   roleIds: string[];
 }
+
+export interface AuditLogResponse {
+  id: number;
+  tableName: string;
+  action: string;
+  keyValues: string | null;
+  oldValues: string | null;
+  newValues: string | null;
+  changedColumns: string | null;
+  userId: string | null;
+  userName: string | null;
+  traceId: string | null;
+  createdAtUtc: string;
+}
+
+export interface UserActivityLogResponse {
+  id: number;
+  activityType: string;
+  description: string | null;
+  metadata: string | null;
+  userId: string | null;
+  userName: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  traceId: string | null;
+  createdAtUtc: string;
+}
+
+export interface PagedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}

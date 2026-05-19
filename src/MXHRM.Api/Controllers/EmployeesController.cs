@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using MXHRM.Application.Authorization;
 using MXHRM.Application.Common;
 using MXHRM.Application.Employees.DTOs;
-using Kendo.Mvc.Extensions;
-using Kendo.Mvc.UI;
+// using Kendo.Mvc.Extensions;
+// using Kendo.Mvc.UI;
 using MXHRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -105,30 +105,30 @@ public class EmployeesController : BaseApiController
         return NoContent();
     }
 
-    [HttpPost("grid")]
-    [Authorize(Policy = Permissions.Employee.Read)]
-    public async Task<IActionResult> GetGrid([DataSourceRequest] DataSourceRequest request)
-    {
-        var query = _db.Employees
-            .AsNoTracking()
-            .Select(x => new
-            {
-                x.CompanyID,
-                x.EmployeeID,
-                x.FirstName,
-                x.LastName,
-                FullName = x.FirstName + " " + x.LastName,
-                x.Email,
-                x.HireDate,
-                x.Salary,
-                x.IsActive,
-                x.RowVersion
-            });
+    // [HttpPost("grid")]
+    // [Authorize(Policy = Permissions.Employee.Read)]
+    // public async Task<IActionResult> GetGrid([DataSourceRequest] DataSourceRequest request)
+    // {
+    //     var query = _db.Employees
+    //         .AsNoTracking()
+    //         .Select(x => new
+    //         {
+    //             x.CompanyID,
+    //             x.EmployeeID,
+    //             x.FirstName,
+    //             x.LastName,
+    //             FullName = x.FirstName + " " + x.LastName,
+    //             x.Email,
+    //             x.HireDate,
+    //             x.Salary,
+    //             x.IsActive,
+    //             x.RowVersion
+    //         });
 
-        var result = await query.ToDataSourceResultAsync(request);
+    //     var result = await query.ToDataSourceResultAsync(request);
 
-        return Ok(result);
-    }
+    //     return Ok(result);
+    // }
 
     [HttpGet("test-error")]
     public IActionResult TestError()

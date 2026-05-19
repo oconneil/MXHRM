@@ -54,10 +54,28 @@ export class MainLayout {
       permission: Permissions.Employee.Read
     },
     {
-      text: 'Security',
+      text: 'Roles',
       route: '/security-admin/roles',
       svgIcon: gearIcon,
       permission: Permissions.Role.Manage
+    },
+    {
+      text: 'Users',
+      route: '/security-admin/users',
+      svgIcon: userIcon,
+      permission: Permissions.Role.Manage
+    },
+    {
+      text: 'Audit Logs',
+      route: '/security-admin/audit-logs',
+      svgIcon: folderIcon,
+      permission: Permissions.Audit.Read
+    },
+    {
+      text: 'Activity Logs',
+      route: '/security-admin/user-activity-logs',
+      svgIcon: folderIcon,
+      permission: Permissions.Activity.Read
     }
   ];
 

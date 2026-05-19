@@ -1,0 +1,69 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Audit Logs</h1>
+        <p class="text-muted mb-0">
+            Review data changes made across the system.
+        </p>
+    </div>
+
+    <button kendoButton type="button" fillMode="outline" (click)="loadAuditLogs()">
+        Refresh
+    </button>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+<kendo-grid [data]="auditLogs()" [height]="680" [loading]="loading()">
+    <kendo-grid-column field="createdAtUtc" title="Created At" [width]="190">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.createdAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="tableName" title="Table" [width]="150">
+    </kendo-grid-column>
+
+    <kendo-grid-column field="action" title="Action" [width]="120">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <span class="badge bg-info text-dark">{{ dataItem.action }}</span>
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="keyValues" title="Key Values" [width]="240">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <pre class="log-json">{{ dataItem.keyValues || '-' }}</pre>
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="changedColumns" title="Changed Columns" [width]="220">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <pre class="log-json">{{ dataItem.changedColumns || '-' }}</pre>
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="userName" title="User" [width]="150">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.userName || '-' }}
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="traceId" title="Trace ID" [width]="220">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.traceId || '-' }}
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="oldValues" title="Old Values" [width]="280">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <pre class="log-json">{{ dataItem.oldValues || '-' }}</pre>
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column field="newValues" title="New Values" [width]="280">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <pre class="log-json">{{ dataItem.newValues || '-' }}</pre>
+        </ng-template>
+    </kendo-grid-column>
+</kendo-grid>

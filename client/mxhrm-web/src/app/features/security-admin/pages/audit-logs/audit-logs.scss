@@ -1,0 +1,11 @@
+:host {
+    display: block;
+}
+
+.log-json {
+    max-height: 120px;
+    margin: 0;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-size: 0.75rem;
+}

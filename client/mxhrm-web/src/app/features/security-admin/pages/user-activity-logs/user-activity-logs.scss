@@ -1,0 +1,19 @@
+:host {
+    display: block;
+}
+
+.log-json {
+    max-height: 120px;
+    margin: 0;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-size: 0.75rem;
+}
+
+.user-agent {
+    display: inline-block;
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

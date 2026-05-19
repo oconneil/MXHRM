@@ -3,13 +3,16 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  AuditLogResponse,
   CreateRoleRequest,
+  PagedResponse,
   PermissionResponse,
   RolePermissionResponse,
   RoleResponse,
   UpdateRolePermissionsRequest,
   UpdateRoleRequest,
   UpdateUserRolesRequest,
+  UserActivityLogResponse,
   UserResponse,
   UserRoleResponse
 } from '../models/security-admin';
@@ -20,7 +23,7 @@ import {
 export class SecurityAdminService {
   private readonly apiBaseUrl = `${environment.apiBaseUrl}/api`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) { }
 
   getRoles(): Observable<RoleResponse[]> {
     return this.http.get<RoleResponse[]>(`${this.apiBaseUrl}/roles`);
@@ -91,6 +94,16 @@ export class SecurityAdminService {
     return this.http.put<void>(
       `${this.apiBaseUrl}/users/${userId}/roles`,
       request
+    );
+  }
+
+  getAuditLogs(): Observable<PagedResponse<AuditLogResponse>> {
+    return this.http.get<PagedResponse<AuditLogResponse>>(`${this.apiBaseUrl}/audit-logs`);
+  }
+
+  getUserActivityLogs(): Observable<PagedResponse<UserActivityLogResponse>> {
+    return this.http.get<PagedResponse<UserActivityLogResponse>>(
+      `${this.apiBaseUrl}/user-activity-logs`
     );
   }
 }

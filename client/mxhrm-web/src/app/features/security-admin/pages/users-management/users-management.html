@@ -1,0 +1,62 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Users Management</h1>
+        <p class="text-muted mb-0">
+            Manage application users, status, and assigned roles.
+        </p>
+    </div>
+
+    <button kendoButton type="button" fillMode="outline" (click)="loadUsers()">
+        Refresh
+    </button>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (successMessage()) {
+<div class="alert alert-success">{{ successMessage() }}</div>
+}
+
+<kendo-grid [data]="users()" [height]="620" [loading]="loading()">
+    <kendo-grid-column field="userName" title="Username" [width]="220">
+    </kendo-grid-column>
+
+    <kendo-grid-column field="displayName" title="Display Name" [width]="240">
+    </kendo-grid-column>
+
+    <kendo-grid-column field="companyID" title="Company ID" [width]="160">
+    </kendo-grid-column>
+
+    <kendo-grid-column field="isActive" title="Status" [width]="140">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            @if (dataItem.isActive) {
+            <span class="badge bg-success">Active</span>
+            } @else {
+            <span class="badge bg-secondary">Inactive</span>
+            }
+        </ng-template>
+    </kendo-grid-column>
+
+    <kendo-grid-column title="Actions" [width]="360">
+        <ng-template kendoGridCellTemplate let-dataItem>
+            <a kendoButton size="small" fillMode="outline" class="me-2"
+                [routerLink]="['/security-admin/users', dataItem.id, 'roles']">
+                Roles
+            </a>
+
+            @if (dataItem.isActive) {
+            <button kendoButton size="small" fillMode="outline" themeColor="warning" type="button"
+                (click)="deactivateUser(dataItem)">
+                Deactivate
+            </button>
+            } @else {
+            <button kendoButton size="small" fillMode="outline" themeColor="success" type="button"
+                (click)="activateUser(dataItem)">
+                Activate
+            </button>
+            }
+        </ng-template>
+    </kendo-grid-column>
+</kendo-grid>
