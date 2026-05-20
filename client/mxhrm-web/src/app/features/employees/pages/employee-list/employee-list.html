@@ -2,64 +2,6 @@
   <h1 class="h3 mb-0">Employees</h1>
 </div>
 
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label">Search</label>
-        <input type="text" class="form-control" placeholder="Search employee..." [ngModel]="search()"
-          (ngModelChange)="search.set($event)" (keyup.enter)="applyFilters()" />
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">Company ID</label>
-        <input type="text" class="form-control" placeholder="C001" [ngModel]="companyID()"
-          (ngModelChange)="companyID.set($event)" (keyup.enter)="applyFilters()" />
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">Status</label>
-        <select class="form-select" [ngModel]="isActive() === null ? '' : isActive()"
-          (ngModelChange)="onIsActiveChange($event)">
-          <option value="">All Status</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">Sort By</label>
-        <select class="form-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
-          <option value="employeeId">Employee ID</option>
-          <option value="firstName">First Name</option>
-          <option value="lastName">Last Name</option>
-          <option value="email">Email</option>
-          <option value="hireDate">Hire Date</option>
-          <option value="salary">Salary</option>
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">Direction</label>
-        <select class="form-select" [ngModel]="sortDirection()" (ngModelChange)="onSortDirectionChange($event)">
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </div>
-
-      <div class="col-12 d-flex gap-2">
-        <button class="btn btn-outline-primary" type="button" (click)="applyFilters()">
-          Apply Filters
-        </button>
-
-        <button class="btn btn-outline-secondary" type="button" (click)="resetFilters()">
-          Reset
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 @if (loading()) {
 <div class="alert alert-info">Loading...</div>
 }
@@ -68,15 +10,10 @@
 <div class="alert alert-danger">{{ errorMessage() }}</div>
 }
 
-@if (!loading() && employees().length === 0) {
-<div class="alert alert-warning">No employees found.</div>
-}
-
-@if (employees().length > 0) {
 <div class="card">
   <kendo-grid [data]="gridData()" [height]="520" [pageSize]="gridState().take" [skip]="gridState().skip"
-    [sort]="gridState().sort" [pageable]="true" [sortable]="true" [loading]="loading()"
-    (dataStateChange)="onGridStateChange($event)">
+    [sort]="gridState().sort" [filter]="gridState().filter" [pageable]="true" [sortable]="true" [filterable]="true"
+    [loading]="loading()" (dataStateChange)="onGridStateChange($event)">
     <ng-template kendoGridToolbarTemplate>
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between w-100">
         <div>
@@ -103,28 +40,28 @@
         </div>
       </div>
     </ng-template>
-    <kendo-grid-column field="employeeID" title="Employee ID" [width]="140">
+    <kendo-grid-column field="employeeID" title="Employee ID" filter="text" [width]="140">
     </kendo-grid-column>
 
-    <kendo-grid-column field="fullName" title="Full Name" [width]="220">
+    <kendo-grid-column field="fullName" title="Full Name" filter="text" [width]="220">
     </kendo-grid-column>
 
-    <kendo-grid-column field="email" title="Email" [width]="260">
+    <kendo-grid-column field="email" title="Email" filter="text" [width]="260">
     </kendo-grid-column>
 
-    <kendo-grid-column field="hireDate" title="Hire Date" [width]="150">
+    <kendo-grid-column field="hireDate" title="Hire Date" filter="date" [width]="150">
       <ng-template kendoGridCellTemplate let-dataItem>
         {{ dataItem.hireDate | date: 'dd/MM/yyyy' }}
       </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="salary" title="Salary" [width]="140" class="text-end">
+    <kendo-grid-column field="salary" title="Salary" filter="numeric" [width]="140" class="text-end">
       <ng-template kendoGridCellTemplate let-dataItem>
         {{ dataItem.salary | number: '1.2-2' }}
       </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="isActive" title="Active" [width]="120">
+    <kendo-grid-column field="isActive" title="Active" filter="boolean" [width]="120">
       <ng-template kendoGridCellTemplate let-dataItem>
         <span class="badge" [class.bg-success]="dataItem.isActive" [class.bg-secondary]="!dataItem.isActive">
           {{ dataItem.isActive ? 'Active' : 'Inactive' }}
@@ -159,4 +96,3 @@
     </ng-template>
   </kendo-grid>
 </div>
-}

@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { EmployeeResponse, PagedResponse } from '../../models/employee';
+import { EmployeeResponse } from '../../models/employee';
 import { EmployeeService } from '../../services/employee';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth';
@@ -11,16 +10,12 @@ import {
   GridDataResult,
   KENDO_GRID
 } from '@progress/kendo-angular-grid';
-import {
-  CompositeFilterDescriptor,
-  FilterDescriptor,
-  State
-} from '@progress/kendo-data-query';
+import { State } from '@progress/kendo-data-query';
 import { KENDO_BUTTONS } from '@progress/kendo-angular-buttons';
 
 @Component({
   selector: 'app-employee-list',
-  imports: [CommonModule, FormsModule, RouterLink, KENDO_GRID, KENDO_BUTTONS],
+  imports: [CommonModule, RouterLink, KENDO_GRID, KENDO_BUTTONS],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.scss'
 })
@@ -40,12 +35,6 @@ export class EmployeeList implements OnInit {
   page = signal(1);
   pageSize = signal(10);
   totalItems = signal(0);
-  totalPages = signal(0);
-  search = signal('');
-  companyID = signal('');
-  isActive = signal<boolean | null>(null);
-  sortBy = signal('employeeId');
-  sortDirection = signal<'asc' | 'desc'>('asc');
 
   gridState = signal<State>({
     skip: 0,
@@ -70,20 +59,8 @@ export class EmployeeList implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const state = this.gridState();
-    const sort = state.sort?.[0];
-
-    const take = state.take ?? this.pageSize();
-    const skip = state.skip ?? 0;
-
-    const pageSize = take;
-    const page = Math.floor(skip / take) + 1;
-
-    const sortBy = this.mapGridFieldToApiSort(sort?.field);
-    const sortDirection = sort?.dir === 'desc' ? 'desc' : 'asc';
-
     this.employeeService
-      .getEmployeesGrid(this.buildGridState())
+      .getEmployeesGrid(this.gridState())
       .subscribe({
         next: (res: GridDataResult) => {
           this.employees.set(res.data as EmployeeResponse[]);
@@ -105,40 +82,7 @@ export class EmployeeList implements OnInit {
       });
   }
 
-  onSearch(): void {
-    this.page.set(1);
-    this.loadEmployees();
-  }
-
-  onIsActiveChange(value: string): void {
-    if (value === '') {
-      this.isActive.set(null);
-      return;
-    }
-
-    this.isActive.set(value === 'true');
-  }
-
-  onSortDirectionChange(value: string): void {
-    this.sortDirection.set(value === 'desc' ? 'desc' : 'asc');
-  }
-
-  applyFilters(): void {
-    this.gridState.update(state => ({
-      ...state,
-      skip: 0
-    }));
-
-    this.page.set(1);
-    this.loadEmployees();
-  }
-
   resetFilters(): void {
-    this.search.set('');
-    this.companyID.set('');
-    this.isActive.set(null);
-    this.sortBy.set('employeeId');
-    this.sortDirection.set('asc');
     this.page.set(1);
 
     this.gridState.set({
@@ -179,71 +123,13 @@ export class EmployeeList implements OnInit {
   }
 
   onGridStateChange(state: DataStateChangeEvent): void {
-    this.gridState.set(state);
+    this.gridState.update(current => ({
+      ...current,
+      ...state,
+      skip: state.skip ?? 0,
+      take: state.take ?? current.take ?? 10
+    }));
     this.loadEmployees();
-  }
-
-  private mapGridFieldToApiSort(field?: string): string {
-    switch (field) {
-      case 'employeeID':
-        return 'employeeId';
-      case 'firstName':
-        return 'firstName';
-      case 'lastName':
-        return 'lastName';
-      case 'email':
-        return 'email';
-      case 'hireDate':
-        return 'hireDate';
-      case 'salary':
-        return 'salary';
-      default:
-        return 'employeeId';
-    }
-  }
-
-  private buildGridState(): State {
-    const filters: Array<FilterDescriptor | CompositeFilterDescriptor> = [];
-
-    if (this.search().trim()) {
-      const search = this.search().trim();
-
-      filters.push({
-        logic: 'or',
-        filters: [
-          { field: 'employeeID', operator: 'contains', value: search },
-          { field: 'firstName', operator: 'contains', value: search },
-          { field: 'lastName', operator: 'contains', value: search },
-          { field: 'email', operator: 'contains', value: search }
-        ]
-      });
-    }
-
-    if (this.companyID().trim()) {
-      filters.push({
-        field: 'companyID',
-        operator: 'eq',
-        value: this.companyID().trim()
-      });
-    }
-
-    if (this.isActive() !== null) {
-      filters.push({
-        field: 'isActive',
-        operator: 'eq',
-        value: this.isActive()
-      });
-    }
-
-    return {
-      ...this.gridState(),
-      filter: filters.length
-        ? {
-          logic: 'and',
-          filters
-        }
-        : undefined
-    };
   }
 
   refreshGrid(): void {

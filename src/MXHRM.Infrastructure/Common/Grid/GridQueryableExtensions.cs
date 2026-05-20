@@ -33,6 +33,11 @@ public static class GridQueryableExtensions
         IQueryable<T> query,
         GridDataSourceRequest request)
     {
+        if (request.Filter is not null)
+        {
+            return ApplyFilter(query, request.Filter);
+        }
+
         foreach (var filter in request.Filters)
         {
             if (string.IsNullOrWhiteSpace(filter.Field) ||
@@ -52,23 +57,7 @@ public static class GridQueryableExtensions
         GridFilterDescriptor filter)
     {
         var parameter = Expression.Parameter(typeof(T), "x");
-        var property = BuildPropertyExpression(parameter, filter.Field);
-
-        if (property is null)
-        {
-            return query;
-        }
-
-        var propertyType = Nullable.GetUnderlyingType(property.Type) ?? property.Type;
-        var convertedValue = ConvertFilterValue(filter.Value, propertyType);
-
-        if (convertedValue is null)
-        {
-            return query;
-        }
-
-        var constant = Expression.Constant(convertedValue, property.Type);
-        var expression = BuildFilterExpression(property, constant, filter.Operator);
+        var expression = BuildFilterExpression(parameter, filter);
 
         if (expression is null)
         {
@@ -80,6 +69,64 @@ public static class GridQueryableExtensions
     }
 
     private static Expression? BuildFilterExpression(
+        ParameterExpression parameter,
+        GridFilterDescriptor filter)
+    {
+        if (filter.IsComposite)
+        {
+            return BuildCompositeFilterExpression(parameter, filter);
+        }
+
+        if (string.IsNullOrWhiteSpace(filter.Field) ||
+            string.IsNullOrWhiteSpace(filter.Value))
+        {
+            return null;
+        }
+
+        var property = BuildPropertyExpression(parameter, filter.Field);
+
+        if (property is null)
+        {
+            return null;
+        }
+
+        var propertyType = Nullable.GetUnderlyingType(property.Type) ?? property.Type;
+        var convertedValue = ConvertFilterValue(filter.Value, propertyType);
+
+        if (convertedValue is null)
+        {
+            return null;
+        }
+
+        var constant = Expression.Constant(convertedValue, property.Type);
+
+        return BuildLeafFilterExpression(property, constant, filter.Operator);
+    }
+
+    private static Expression? BuildCompositeFilterExpression(
+        ParameterExpression parameter,
+        GridFilterDescriptor filter)
+    {
+        var expressions = filter.Filters
+            .Select(child => BuildFilterExpression(parameter, child))
+            .Where(expression => expression is not null)
+            .Cast<Expression>()
+            .ToList();
+
+        if (expressions.Count == 0)
+        {
+            return null;
+        }
+
+        var useOr = filter.Logic.Equals("or", StringComparison.OrdinalIgnoreCase);
+
+        return expressions.Aggregate((left, right) =>
+            useOr
+                ? Expression.OrElse(left, right)
+                : Expression.AndAlso(left, right));
+    }
+
+    private static Expression? BuildLeafFilterExpression(
         Expression property,
         Expression constant,
         string filterOperator)
@@ -118,6 +165,22 @@ public static class GridQueryableExtensions
 
                 "neq" => Expression.NotEqual(property, constant),
 
+                "isempty" => Expression.Equal(
+                    property,
+                    Expression.Constant(string.Empty)),
+
+                "isnotempty" => Expression.NotEqual(
+                    property,
+                    Expression.Constant(string.Empty)),
+
+                "isnull" => Expression.Equal(
+                    property,
+                    Expression.Constant(null, property.Type)),
+
+                "isnotnull" => Expression.NotEqual(
+                    property,
+                    Expression.Constant(null, property.Type)),
+
                 _ => null
             };
         }
@@ -130,6 +193,8 @@ public static class GridQueryableExtensions
             "gt" => Expression.GreaterThan(property, constant),
             "lte" => Expression.LessThanOrEqual(property, constant),
             "lt" => Expression.LessThan(property, constant),
+            "isnull" => Expression.Equal(property, Expression.Constant(null, property.Type)),
+            "isnotnull" => Expression.NotEqual(property, Expression.Constant(null, property.Type)),
             _ => null
         };
     }
@@ -205,8 +270,6 @@ public static class GridQueryableExtensions
         Expression parameter,
         string field)
     {
-        var property = typeof(object);
-
         Expression current = parameter;
 
         foreach (var member in field.Split('.'))
@@ -281,6 +344,17 @@ public static class GridQueryableExtensions
                 : null;
         }
 
-        return Convert.ChangeType(value, targetType);
+        try
+        {
+            return Convert.ChangeType(value, targetType);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (InvalidCastException)
+        {
+            return null;
+        }
     }
 }
