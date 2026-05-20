@@ -4,6 +4,7 @@ import { State } from '@progress/kendo-data-query';
 import { KENDO_BUTTONS } from '@progress/kendo-angular-buttons';
 import { AuditLogResponse } from '../../models/security-admin';
 import { SecurityAdminService } from '../../services/security-admin';
+import { KENDO_DIALOG } from '@progress/kendo-angular-dialog';
 import {
   DataStateChangeEvent,
   GridDataResult,
@@ -16,13 +17,15 @@ import {
     CommonModule,
     DatePipe,
     KENDO_BUTTONS,
-    KENDO_GRID
+    KENDO_GRID,
+    KENDO_DIALOG
   ],
   templateUrl: './audit-logs.html',
   styleUrl: './audit-logs.scss'
 })
 export class AuditLogs implements OnInit {
   auditLogs = signal<AuditLogResponse[]>([]);
+  selectedAuditLog = signal<AuditLogResponse | null>(null);
   totalItems = signal(0);
   loading = signal(false);
   errorMessage = signal('');
@@ -89,5 +92,43 @@ export class AuditLogs implements OnInit {
     });
 
     this.loadAuditLogs();
+  }
+
+  openDetails(auditLog: AuditLogResponse): void {
+    this.selectedAuditLog.set(auditLog);
+  }
+
+  closeDetails(): void {
+    this.selectedAuditLog.set(null);
+  }
+
+  formatJson(value: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  getActionBadgeClass(action: string): string {
+    const normalizedAction = action.toLowerCase();
+
+    if (normalizedAction.includes('insert') || normalizedAction.includes('create')) {
+      return 'bg-success';
+    }
+
+    if (normalizedAction.includes('update')) {
+      return 'bg-warning text-dark';
+    }
+
+    if (normalizedAction.includes('delete')) {
+      return 'bg-danger';
+    }
+
+    return 'bg-info text-dark';
   }
 }

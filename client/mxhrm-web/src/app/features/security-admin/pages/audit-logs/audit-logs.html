@@ -35,19 +35,9 @@
 
     <kendo-grid-column field="action" title="Action" filter="text" [width]="120">
         <ng-template kendoGridCellTemplate let-dataItem>
-            <span class="badge bg-info text-dark">{{ dataItem.action }}</span>
-        </ng-template>
-    </kendo-grid-column>
-
-    <kendo-grid-column field="keyValues" title="Key Values" filter="text" [width]="240">
-        <ng-template kendoGridCellTemplate let-dataItem>
-            <pre class="log-json">{{ dataItem.keyValues || '-' }}</pre>
-        </ng-template>
-    </kendo-grid-column>
-
-    <kendo-grid-column field="changedColumns" title="Changed Columns" filter="text" [width]="220">
-        <ng-template kendoGridCellTemplate let-dataItem>
-            <pre class="log-json">{{ dataItem.changedColumns || '-' }}</pre>
+            <span class="badge" [ngClass]="getActionBadgeClass(dataItem.action)">
+                {{ dataItem.action }}
+            </span>
         </ng-template>
     </kendo-grid-column>
 
@@ -57,21 +47,72 @@
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="traceId" title="Trace ID" filter="text" [width]="220">
+    <kendo-grid-column field="traceId" title="Trace ID" filter="text" [width]="260">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.traceId || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="oldValues" title="Old Values" filter="text" [width]="280">
+    <kendo-grid-column title="Actions" [width]="150">
         <ng-template kendoGridCellTemplate let-dataItem>
-            <pre class="log-json">{{ dataItem.oldValues || '-' }}</pre>
-        </ng-template>
-    </kendo-grid-column>
-
-    <kendo-grid-column field="newValues" title="New Values" filter="text" [width]="280">
-        <ng-template kendoGridCellTemplate let-dataItem>
-            <pre class="log-json">{{ dataItem.newValues || '-' }}</pre>
+            <button kendoButton size="small" fillMode="outline" type="button" (click)="openDetails(dataItem)">
+                View Details
+            </button>
         </ng-template>
     </kendo-grid-column>
 </kendo-grid>
+
+@if (selectedAuditLog(); as auditLog) {
+<kendo-dialog title="Audit Log Details" [width]="760" [maxWidth]="'92vw'" (close)="closeDetails()">
+    <div class="dialog-content">
+        <div class="detail-grid">
+            <div>
+                <span class="detail-label">Created At</span>
+                <strong>{{ auditLog.createdAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">Table</span>
+                <strong>{{ auditLog.tableName }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">Action</span>
+                <span class="badge" [ngClass]="getActionBadgeClass(auditLog.action)">
+                    {{ auditLog.action }}
+                </span>
+            </div>
+
+            <div>
+                <span class="detail-label">User</span>
+                <strong>{{ auditLog.userName || '-' }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">Trace ID</span>
+                <code>{{ auditLog.traceId || '-' }}</code>
+            </div>
+        </div>
+
+        <hr />
+
+        <h3 class="h6">Key Values</h3>
+        <pre class="json-viewer">{{ formatJson(auditLog.keyValues) }}</pre>
+
+        <h3 class="h6">Changed Columns</h3>
+        <pre class="json-viewer">{{ formatJson(auditLog.changedColumns) }}</pre>
+
+        <h3 class="h6">Old Values</h3>
+        <pre class="json-viewer">{{ formatJson(auditLog.oldValues) }}</pre>
+
+        <h3 class="h6">New Values</h3>
+        <pre class="json-viewer">{{ formatJson(auditLog.newValues) }}</pre>
+    </div>
+
+    <kendo-dialog-actions>
+        <button kendoButton themeColor="primary" type="button" (click)="closeDetails()">
+            Close
+        </button>
+    </kendo-dialog-actions>
+</kendo-dialog>
+}

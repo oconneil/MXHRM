@@ -17,3 +17,67 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.detail-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.dialog-content {
+    max-height: min(68vh, 620px);
+    padding: 0.5rem 0.25rem 0.25rem;
+    overflow: auto;
+}
+
+.dialog-content hr {
+    margin: 1.25rem 0;
+}
+
+.dialog-content h3 {
+    margin: 1rem 0 0.5rem;
+}
+
+.description-block {
+    margin-bottom: 1rem;
+    padding: 0.875rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 0.65rem;
+    background: #f8fafc;
+    color: #334155;
+}
+
+.json-viewer {
+    max-height: 180px;
+    margin: 0 0 1rem;
+    padding: 0.875rem;
+    overflow: auto;
+    border: 1px solid #dbe3ef;
+    border-radius: 0.65rem;
+    background: #0f172a;
+    color: #dbeafe;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 767.98px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dialog-content {
+        max-height: 70vh;
+    }
+}

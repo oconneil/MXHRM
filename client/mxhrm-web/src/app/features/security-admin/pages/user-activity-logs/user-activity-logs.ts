@@ -4,6 +4,7 @@ import { State } from '@progress/kendo-data-query';
 import { KENDO_BUTTONS } from '@progress/kendo-angular-buttons';
 import { UserActivityLogResponse } from '../../models/security-admin';
 import { SecurityAdminService } from '../../services/security-admin';
+import { KENDO_DIALOG } from '@progress/kendo-angular-dialog';
 import {
   DataStateChangeEvent,
   GridDataResult,
@@ -16,13 +17,15 @@ import {
     CommonModule,
     DatePipe,
     KENDO_BUTTONS,
-    KENDO_GRID
+    KENDO_GRID,
+    KENDO_DIALOG
   ],
   templateUrl: './user-activity-logs.html',
   styleUrl: './user-activity-logs.scss'
 })
 export class UserActivityLogs implements OnInit {
   userActivityLogs = signal<UserActivityLogResponse[]>([]);
+  selectedActivityLog = signal<UserActivityLogResponse | null>(null);
   totalItems = signal(0);
   loading = signal(false);
   errorMessage = signal('');
@@ -89,5 +92,47 @@ export class UserActivityLogs implements OnInit {
     });
 
     this.loadUserActivityLogs();
+  }
+
+  openDetails(activityLog: UserActivityLogResponse): void {
+    this.selectedActivityLog.set(activityLog);
+  }
+
+  closeDetails(): void {
+    this.selectedActivityLog.set(null);
+  }
+
+  formatJson(value: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  getActivityBadgeClass(activityType: string): string {
+    const normalizedActivityType = activityType.toLowerCase();
+
+    if (normalizedActivityType.includes('success')) {
+      return 'bg-success';
+    }
+
+    if (normalizedActivityType.includes('failed') || normalizedActivityType.includes('error')) {
+      return 'bg-danger';
+    }
+
+    if (normalizedActivityType.includes('refresh')) {
+      return 'bg-info text-dark';
+    }
+
+    if (normalizedActivityType.includes('logout')) {
+      return 'bg-secondary';
+    }
+
+    return 'bg-primary';
   }
 }

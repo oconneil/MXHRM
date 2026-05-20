@@ -32,11 +32,13 @@
 
     <kendo-grid-column field="activityType" title="Activity Type" filter="text" [width]="170">
         <ng-template kendoGridCellTemplate let-dataItem>
-            <span class="badge bg-primary">{{ dataItem.activityType }}</span>
+            <span class="badge" [ngClass]="getActivityBadgeClass(dataItem.activityType)">
+                {{ dataItem.activityType }}
+            </span>
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="description" title="Description" filter="text" [width]="260">
+    <kendo-grid-column field="description" title="Description" filter="text" [width]="280">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.description || '-' }}
         </ng-template>
@@ -54,21 +56,69 @@
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="traceId" title="Trace ID" filter="text" [width]="220">
+    <kendo-grid-column field="traceId" title="Trace ID" filter="text" [width]="240">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.traceId || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="metadata" title="Metadata" filter="text" [width]="280">
+    <kendo-grid-column title="Actions" [width]="150">
         <ng-template kendoGridCellTemplate let-dataItem>
-            <pre class="log-json">{{ dataItem.metadata || '-' }}</pre>
-        </ng-template>
-    </kendo-grid-column>
-
-    <kendo-grid-column field="userAgent" title="User Agent" filter="text" [width]="360">
-        <ng-template kendoGridCellTemplate let-dataItem>
-            <span class="user-agent">{{ dataItem.userAgent || '-' }}</span>
+            <button kendoButton size="small" fillMode="outline" type="button" (click)="openDetails(dataItem)">
+                View Details
+            </button>
         </ng-template>
     </kendo-grid-column>
 </kendo-grid>
+
+@if (selectedActivityLog(); as activityLog) {
+<kendo-dialog title="User Activity Details" [width]="760" [maxWidth]="'92vw'" (close)="closeDetails()">
+    <div class="dialog-content">
+        <div class="detail-grid">
+            <div>
+                <span class="detail-label">Created At</span>
+                <strong>{{ activityLog.createdAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">Activity Type</span>
+                <span class="badge" [ngClass]="getActivityBadgeClass(activityLog.activityType)">
+                    {{ activityLog.activityType }}
+                </span>
+            </div>
+
+            <div>
+                <span class="detail-label">User</span>
+                <strong>{{ activityLog.userName || '-' }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">IP Address</span>
+                <code>{{ activityLog.ipAddress || '-' }}</code>
+            </div>
+
+            <div>
+                <span class="detail-label">Trace ID</span>
+                <code>{{ activityLog.traceId || '-' }}</code>
+            </div>
+        </div>
+
+        <hr />
+
+        <h3 class="h6">Description</h3>
+        <p class="description-block">{{ activityLog.description || '-' }}</p>
+
+        <h3 class="h6">Metadata</h3>
+        <pre class="json-viewer">{{ formatJson(activityLog.metadata) }}</pre>
+
+        <h3 class="h6">User Agent</h3>
+        <pre class="json-viewer">{{ activityLog.userAgent || '-' }}</pre>
+    </div>
+
+    <kendo-dialog-actions>
+        <button kendoButton themeColor="primary" type="button" (click)="closeDetails()">
+            Close
+        </button>
+    </kendo-dialog-actions>
+</kendo-dialog>
+}

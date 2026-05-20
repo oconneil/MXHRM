@@ -21,6 +21,7 @@
     "@progress/kendo-angular-buttons": "^23.4.0",
     "@progress/kendo-angular-common": "^23.4.0",
     "@progress/kendo-angular-dateinputs": "^23.4.0",
+    "@progress/kendo-angular-dialog": "^23.4.0",
     "@progress/kendo-angular-dropdowns": "^23.4.0",
     "@progress/kendo-angular-excel-export": "^23.4.0",
     "@progress/kendo-angular-grid": "^23.4.0",
