@@ -6,59 +6,67 @@
         </p>
     </div>
 
-    <button kendoButton type="button" fillMode="outline" (click)="loadUserActivityLogs()">
-        Refresh
-    </button>
+    <div class="d-flex gap-2">
+        <button kendoButton type="button" fillMode="outline" (click)="loadUserActivityLogs()">
+            Refresh
+        </button>
+
+        <button kendoButton type="button" fillMode="outline" (click)="clearGridState()">
+            Clear Filters
+        </button>
+    </div>
 </div>
 
 @if (errorMessage()) {
 <div class="alert alert-danger">{{ errorMessage() }}</div>
 }
 
-<kendo-grid [data]="userActivityLogs()" [height]="680" [loading]="loading()">
-    <kendo-grid-column field="createdAtUtc" title="Created At" [width]="190">
+<kendo-grid [data]="gridData()" [height]="680" [pageable]="true" [sortable]="true" [filterable]="true"
+    [pageSize]="gridState().take" [skip]="gridState().skip" [sort]="gridState().sort" [filter]="gridState().filter"
+    [loading]="loading()" (dataStateChange)="onGridStateChange($event)">
+    <kendo-grid-column field="createdAtUtc" title="Created At" filter="date" [width]="190">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.createdAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="activityType" title="Activity Type" [width]="170">
+    <kendo-grid-column field="activityType" title="Activity Type" filter="text" [width]="170">
         <ng-template kendoGridCellTemplate let-dataItem>
             <span class="badge bg-primary">{{ dataItem.activityType }}</span>
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="description" title="Description" [width]="260">
+    <kendo-grid-column field="description" title="Description" filter="text" [width]="260">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.description || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="userName" title="User" [width]="150">
+    <kendo-grid-column field="userName" title="User" filter="text" [width]="150">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.userName || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="ipAddress" title="IP Address" [width]="140">
+    <kendo-grid-column field="ipAddress" title="IP Address" filter="text" [width]="140">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.ipAddress || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="traceId" title="Trace ID" [width]="220">
+    <kendo-grid-column field="traceId" title="Trace ID" filter="text" [width]="220">
         <ng-template kendoGridCellTemplate let-dataItem>
             {{ dataItem.traceId || '-' }}
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="metadata" title="Metadata" [width]="280">
+    <kendo-grid-column field="metadata" title="Metadata" filter="text" [width]="280">
         <ng-template kendoGridCellTemplate let-dataItem>
             <pre class="log-json">{{ dataItem.metadata || '-' }}</pre>
         </ng-template>
     </kendo-grid-column>
 
-    <kendo-grid-column field="userAgent" title="User Agent" [width]="360">
+    <kendo-grid-column field="userAgent" title="User Agent" filter="text" [width]="360">
         <ng-template kendoGridCellTemplate let-dataItem>
             <span class="user-agent">{{ dataItem.userAgent || '-' }}</span>
         </ng-template>

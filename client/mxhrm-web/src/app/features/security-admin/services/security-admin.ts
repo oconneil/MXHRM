@@ -16,6 +16,8 @@ import {
   UserResponse,
   UserRoleResponse
 } from '../models/security-admin';
+import { GridDataResult } from '@progress/kendo-angular-grid';
+import { State, toDataSourceRequestString } from '@progress/kendo-data-query';
 
 @Injectable({
   providedIn: 'root'
@@ -104,6 +106,24 @@ export class SecurityAdminService {
   getUserActivityLogs(): Observable<PagedResponse<UserActivityLogResponse>> {
     return this.http.get<PagedResponse<UserActivityLogResponse>>(
       `${this.apiBaseUrl}/user-activity-logs`
+    );
+  }
+  
+  getAuditLogsGrid(state: State): Observable<GridDataResult> {
+    const queryString = toDataSourceRequestString(state);
+
+    return this.http.post<GridDataResult>(
+      `${this.apiBaseUrl}/audit-logs/grid?${queryString}`,
+      {}
+    );
+  }
+
+  getUserActivityLogsGrid(state: State): Observable<GridDataResult> {
+    const queryString = toDataSourceRequestString(state);
+
+    return this.http.post<GridDataResult>(
+      `${this.apiBaseUrl}/user-activity-logs/grid?${queryString}`,
+      {}
     );
   }
 }
