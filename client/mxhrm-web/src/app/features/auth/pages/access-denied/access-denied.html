@@ -1,0 +1,31 @@
+<div class="access-denied-page">
+    <section class="access-card">
+        <div class="access-mark">403</div>
+
+        <p class="eyebrow">Access restricted</p>
+
+        <h1>You do not have permission to access this page.</h1>
+
+        <p class="description">
+            This area is protected by role and permission-based authorization.
+            If you believe you should have access, please contact your administrator.
+        </p>
+
+        @if (requiredPermission(); as permission) {
+        <div class="permission-box">
+            <span>Required permission</span>
+            <code>{{ permission }}</code>
+        </div>
+        }
+
+        <div class="actions">
+            <a kendoButton themeColor="primary" routerLink="/employees">
+                Back to Employees
+            </a>
+
+            <a kendoButton fillMode="outline" routerLink="/login">
+                Switch Account
+            </a>
+        </div>
+    </section>
+</div>

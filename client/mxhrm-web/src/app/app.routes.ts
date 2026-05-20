@@ -13,6 +13,8 @@ import { AuditLogs } from './features/security-admin/pages/audit-logs/audit-logs
 import { UserActivityLogs } from './features/security-admin/pages/user-activity-logs/user-activity-logs';
 import { permissionGuard } from './core/guards/permission-guard';
 import { Permissions } from './core/models/permissions';
+import { AccessDenied } from './features/auth/pages/access-denied/access-denied';
+import { NotFound } from './features/auth/pages/not-found/not-found';
 
 export const routes: Routes = [
   {
@@ -28,6 +30,14 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'employees',
         pathMatch: 'full'
+      },
+      {
+        path: 'access-denied',
+        component: AccessDenied
+      },
+      {
+        path: 'not-found',
+        component: NotFound
       },
       {
         path: 'employees',
@@ -90,5 +100,9 @@ export const routes: Routes = [
         }
       }
     ]
+  },
+  {
+    path: '**',
+    redirectTo: 'not-found'
   }
 ];

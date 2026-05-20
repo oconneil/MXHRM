@@ -21,5 +21,9 @@ export const permissionGuard: CanActivateFn = route => {
     return true;
   }
 
-  return router.createUrlTree(['/employees']);
+  return router.createUrlTree(['/access-denied'], {
+    queryParams: {
+      permission: permission ?? permissions?.join(',')
+    }
+  });
 };
