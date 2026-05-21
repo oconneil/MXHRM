@@ -1,0 +1,61 @@
+:host {
+    display: block;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.summary-card {
+    padding: 1.25rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 12px 30px rgb(15 23 42 / 6%);
+}
+
+.summary-card span {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.summary-card strong {
+    color: #0f172a;
+    font-size: clamp(1.5rem, 3vw, 2.15rem);
+    line-height: 1;
+}
+
+.summary-card.total {
+    border-top: 4px solid #2563eb;
+}
+
+.summary-card.active {
+    border-top: 4px solid #16a34a;
+}
+
+.summary-card.inactive {
+    border-top: 4px solid #64748b;
+}
+
+.summary-card.salary {
+    border-top: 4px solid #0f766e;
+}
+
+@media (max-width: 1199.98px) {
+    .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

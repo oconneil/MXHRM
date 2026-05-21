@@ -76,6 +76,12 @@ export class MainLayout {
       route: '/security-admin/user-activity-logs',
       svgIcon: folderIcon,
       permission: Permissions.Activity.Read
+    },
+    {
+      text: 'Reports',
+      route: '/reports/employee-summary',
+      svgIcon: folderIcon,
+      permission: Permissions.Employee.Read
     }
   ];
 

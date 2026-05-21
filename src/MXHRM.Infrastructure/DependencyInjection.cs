@@ -22,6 +22,8 @@ using Hangfire.SqlServer;
 using MXHRM.Infrastructure.Jobs;
 using MXHRM.Application.Auditing;
 using MXHRM.Infrastructure.Auditing;
+using MXHRM.Application.Reports;
+using MXHRM.Infrastructure.Reports;
 
 namespace MXHRM.Infrastructure;
 
@@ -99,6 +101,7 @@ public static class DependencyInjection
         services.AddScoped<EmployeeReportJob>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IUserActivityLogService, UserActivityLogService>();
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }

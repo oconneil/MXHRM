@@ -1,0 +1,133 @@
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1">Employee Summary Report</h1>
+    <p class="text-muted mb-0">
+      Review employee totals, salary summary, and company breakdown.
+    </p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button kendoButton type="button" fillMode="outline" (click)="loadReport()">
+      Refresh
+    </button>
+
+    <button kendoButton type="button" themeColor="primary" (click)="exportExcel()"
+      [disabled]="exporting() || loading()">
+      {{ exporting() ? 'Exporting...' : 'Export Excel' }}
+    </button>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Company ID</label>
+        <input class="form-control" type="text" placeholder="JCORP" [ngModel]="companyID()"
+          (ngModelChange)="companyID.set($event)" />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select class="form-select" [ngModel]="isActive()" (ngModelChange)="isActive.set($event)">
+          <option value="">All</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Hire Date From</label>
+        <input class="form-control" type="date" [ngModel]="hireDateFrom()" (ngModelChange)="hireDateFrom.set($event)" />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Hire Date To</label>
+        <input class="form-control" type="date" [ngModel]="hireDateTo()" (ngModelChange)="hireDateTo.set($event)" />
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button kendoButton themeColor="primary" type="button" (click)="loadReport()">
+          Apply Filters
+        </button>
+
+        <button kendoButton fillMode="outline" type="button" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (loading()) {
+<div class="alert alert-info">Loading report...</div>
+}
+
+@if (report(); as summary) {
+<div class="summary-grid mb-3">
+  <section class="summary-card total">
+    <span>Total Employees</span>
+    <strong>{{ summary.totalEmployees | number }}</strong>
+  </section>
+
+  <section class="summary-card active">
+    <span>Active Employees</span>
+    <strong>{{ summary.activeEmployees | number }}</strong>
+  </section>
+
+  <section class="summary-card inactive">
+    <span>Inactive Employees</span>
+    <strong>{{ summary.inactiveEmployees | number }}</strong>
+  </section>
+
+  <section class="summary-card salary">
+    <span>Average Salary</span>
+    <strong>{{ summary.averageSalary | number: '1.2-2' }}</strong>
+  </section>
+
+  <section class="summary-card salary">
+    <span>Total Salary</span>
+    <strong>{{ summary.totalSalary | number: '1.2-2' }}</strong>
+  </section>
+</div>
+
+<p class="text-muted small mb-3">
+  Generated at: {{ summary.generatedAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}
+</p>
+
+<div class="card">
+  <div class="card-body">
+    <h2 class="h5 mb-3">Breakdown by Company</h2>
+
+    <kendo-grid [data]="byCompany()" [height]="420">
+      <kendo-grid-column field="companyID" title="Company ID" [width]="150">
+      </kendo-grid-column>
+
+      <kendo-grid-column field="totalEmployees" title="Total" [width]="130">
+      </kendo-grid-column>
+
+      <kendo-grid-column field="activeEmployees" title="Active" [width]="130">
+      </kendo-grid-column>
+
+      <kendo-grid-column field="inactiveEmployees" title="Inactive" [width]="130">
+      </kendo-grid-column>
+
+      <kendo-grid-column field="averageSalary" title="Average Salary" [width]="180">
+        <ng-template kendoGridCellTemplate let-dataItem>
+          {{ dataItem.averageSalary | number: '1.2-2' }}
+        </ng-template>
+      </kendo-grid-column>
+
+      <kendo-grid-column field="totalSalary" title="Total Salary" [width]="180">
+        <ng-template kendoGridCellTemplate let-dataItem>
+          {{ dataItem.totalSalary | number: '1.2-2' }}
+        </ng-template>
+      </kendo-grid-column>
+    </kendo-grid>
+  </div>
+</div>
+}

@@ -15,6 +15,7 @@ import { permissionGuard } from './core/guards/permission-guard';
 import { Permissions } from './core/models/permissions';
 import { AccessDenied } from './features/auth/pages/access-denied/access-denied';
 import { NotFound } from './features/auth/pages/not-found/not-found';
+import { EmployeeSummaryReport } from './features/reports/pages/employee-summary-report/employee-summary-report';
 
 export const routes: Routes = [
   {
@@ -97,6 +98,14 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: Permissions.Activity.Read
+        }
+      },
+      {
+        path: 'reports/employee-summary',
+        component: EmployeeSummaryReport,
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Employee.Read
         }
       }
     ]
