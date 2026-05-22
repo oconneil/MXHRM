@@ -19,6 +19,7 @@ using Hangfire.Dashboard;
 using MXHRM.Api.Hangfire;
 using MXHRM.Api.Services;
 using MXHRM.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -80,6 +81,16 @@ builder.Services.AddEndpointsApiExplorer();
 // Configure Swagger with JWT authentication support
 builder.Services.AddSwaggerGen(options =>
 {
+    options.CustomOperationIds(apiDescription =>
+    {
+        if (apiDescription.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
+        {
+            return $"{actionDescriptor.ControllerName}_{actionDescriptor.ActionName}";
+        }
+
+        return null;
+    });
+    
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
