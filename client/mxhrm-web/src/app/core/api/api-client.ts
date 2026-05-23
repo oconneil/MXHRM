@@ -1169,6 +1169,14 @@ export interface IReportsClient {
      * @return File
      */
     exportAuditReportExcel(tableName?: string | undefined, action?: string | undefined, userId?: string | undefined, fromUtc?: string | undefined, toUtc?: string | undefined): Observable<FileResponse>;
+    /**
+     * @param companyID (optional) 
+     * @param isActive (optional) 
+     * @param hireDateFrom (optional) 
+     * @param hireDateTo (optional) 
+     * @return File
+     */
+    exportEmployeeSummaryPdf(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<FileResponse>;
 }
 
 @Injectable({
@@ -1459,6 +1467,81 @@ export class ReportsClient implements IReportsClient {
     }
 
     protected processExportAuditReportExcel(response: HttpResponseBase): Observable<FileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return _observableOf({ fileName: fileName, data: responseBlob as any, status: status, headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param companyID (optional) 
+     * @param isActive (optional) 
+     * @param hireDateFrom (optional) 
+     * @param hireDateTo (optional) 
+     * @return File
+     */
+    exportEmployeeSummaryPdf(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<FileResponse> {
+        let url_ = this.baseUrl + "/api/Reports/employee-summary/export/pdf?";
+        if (companyID === null)
+            throw new globalThis.Error("The parameter 'companyID' cannot be null.");
+        else if (companyID !== undefined)
+            url_ += "CompanyID=" + encodeURIComponent("" + companyID) + "&";
+        if (isActive === null)
+            throw new globalThis.Error("The parameter 'isActive' cannot be null.");
+        else if (isActive !== undefined)
+            url_ += "IsActive=" + encodeURIComponent("" + isActive) + "&";
+        if (hireDateFrom === null)
+            throw new globalThis.Error("The parameter 'hireDateFrom' cannot be null.");
+        else if (hireDateFrom !== undefined)
+            url_ += "HireDateFrom=" + encodeURIComponent("" + hireDateFrom) + "&";
+        if (hireDateTo === null)
+            throw new globalThis.Error("The parameter 'hireDateTo' cannot be null.");
+        else if (hireDateTo !== undefined)
+            url_ += "HireDateTo=" + encodeURIComponent("" + hireDateTo) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/pdf"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processExportEmployeeSummaryPdf(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processExportEmployeeSummaryPdf(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FileResponse>;
+        }));
+    }
+
+    protected processExportEmployeeSummaryPdf(response: HttpResponseBase): Observable<FileResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :

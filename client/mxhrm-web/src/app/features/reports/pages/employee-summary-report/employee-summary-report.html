@@ -12,8 +12,13 @@
     </button>
 
     <button kendoButton type="button" themeColor="primary" (click)="exportExcel()"
-      [disabled]="exporting() || loading()">
+      [disabled]="exporting() || exportingPdf() || loading()">
       {{ exporting() ? 'Exporting...' : 'Export Excel' }}
+    </button>
+
+    <button kendoButton type="button" fillMode="outline" (click)="exportPdf()"
+      [disabled]="exporting() || exportingPdf() || loading()">
+      {{ exportingPdf() ? 'Exporting PDF...' : 'Export PDF' }}
     </button>
   </div>
 </div>

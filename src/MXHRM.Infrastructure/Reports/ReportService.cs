@@ -4,6 +4,9 @@ using MXHRM.Application.Reports.DTOs;
 using MXHRM.Infrastructure.Data;
 using ClosedXML.Excel;
 using MXHRM.Application.Reports.Exports;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace MXHRM.Infrastructure.Reports;
 
@@ -14,7 +17,13 @@ public sealed class ReportService : IReportService
     public ReportService(AppDbContext db)
     {
         _db = db;
+        QuestPDF.Settings.License = LicenseType.Community;
     }
+
+    private const string ExcelContentType =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private const string PdfContentType = "application/pdf";
 
     public async Task<EmployeeSummaryReportResponse> GetEmployeeSummaryAsync(
         EmployeeSummaryReportRequest request,
@@ -322,5 +331,164 @@ public sealed class ReportService : IReportService
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             FileName = $"audit-report-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx"
         };
+    }
+
+    public async Task<ReportFileResponse> ExportEmployeeSummaryPdfAsync(
+    EmployeeSummaryReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var report = await GetEmployeeSummaryAsync(request, cancellationToken);
+
+        var pdfBytes = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(40);
+                page.Size(PageSizes.A4);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header()
+                    .Column(column =>
+                    {
+                        column.Item()
+                            .Text("Employee Summary Report")
+                            .FontSize(20)
+                            .Bold();
+
+                        column.Item()
+                            .Text($"Generated at UTC: {report.GeneratedAtUtc:yyyy-MM-dd HH:mm:ss}")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Darken1);
+                    });
+
+                page.Content()
+                    .PaddingVertical(20)
+                    .Column(column =>
+                    {
+                        column.Spacing(14);
+
+                        column.Item()
+                            .Row(row =>
+                            {
+                                row.RelativeItem().Element(container =>
+                                    BuildSummaryBox(container, "Total Employees", report.TotalEmployees.ToString("N0")));
+
+                                row.RelativeItem().Element(container =>
+                                    BuildSummaryBox(container, "Active Employees", report.ActiveEmployees.ToString("N0")));
+
+                                row.RelativeItem().Element(container =>
+                                    BuildSummaryBox(container, "Inactive Employees", report.InactiveEmployees.ToString("N0")));
+                            });
+
+                        column.Item()
+                            .Row(row =>
+                            {
+                                row.RelativeItem().Element(container =>
+                                    BuildSummaryBox(container, "Average Salary", report.AverageSalary.ToString("N2")));
+
+                                row.RelativeItem().Element(container =>
+                                    BuildSummaryBox(container, "Total Salary", report.TotalSalary.ToString("N2")));
+                            });
+
+                        column.Item()
+                            .Text("Breakdown by Company")
+                            .FontSize(14)
+                            .Bold();
+
+                        column.Item()
+                            .Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Element(BuildTableHeader).Text("Company");
+                                    header.Cell().Element(BuildTableHeader).AlignRight().Text("Total");
+                                    header.Cell().Element(BuildTableHeader).AlignRight().Text("Active");
+                                    header.Cell().Element(BuildTableHeader).AlignRight().Text("Inactive");
+                                    header.Cell().Element(BuildTableHeader).AlignRight().Text("Avg Salary");
+                                    header.Cell().Element(BuildTableHeader).AlignRight().Text("Total Salary");
+                                });
+
+                                foreach (var item in report.ByCompany)
+                                {
+                                    table.Cell().Element(BuildTableCell).Text(item.CompanyID);
+                                    table.Cell().Element(BuildTableCell).AlignRight().Text(item.TotalEmployees.ToString("N0"));
+                                    table.Cell().Element(BuildTableCell).AlignRight().Text(item.ActiveEmployees.ToString("N0"));
+                                    table.Cell().Element(BuildTableCell).AlignRight().Text(item.InactiveEmployees.ToString("N0"));
+                                    table.Cell().Element(BuildTableCell).AlignRight().Text(item.AverageSalary.ToString("N2"));
+                                    table.Cell().Element(BuildTableCell).AlignRight().Text(item.TotalSalary.ToString("N2"));
+                                }
+                            });
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("Page ");
+                        text.CurrentPageNumber();
+                        text.Span(" of ");
+                        text.TotalPages();
+                    });
+            });
+        }).GeneratePdf();
+
+        return new ReportFileResponse
+        {
+            Content = pdfBytes,
+            ContentType = PdfContentType,
+            FileName = $"employee-summary-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf"
+        };
+    }
+
+    private static void BuildSummaryBox(
+    IContainer container,
+    string label,
+    string value)
+    {
+        container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Background(Colors.Grey.Lighten5)
+            .Padding(10)
+            .Column(column =>
+            {
+                column.Item()
+                    .Text(label)
+                    .FontSize(8)
+                    .FontColor(Colors.Grey.Darken1);
+
+                column.Item()
+                    .Text(value)
+                    .FontSize(14)
+                    .Bold();
+            });
+    }
+
+    private static IContainer BuildTableHeader(IContainer container)
+    {
+        return container
+            .Background(Colors.Blue.Darken2)
+            .DefaultTextStyle(x => x.FontColor(Colors.White).Bold())
+            .PaddingVertical(6)
+            .PaddingHorizontal(5);
+    }
+
+    private static IContainer BuildTableCell(IContainer container)
+    {
+        return container
+            .BorderBottom(1)
+            .BorderColor(Colors.Grey.Lighten3)
+            .PaddingVertical(5)
+            .PaddingHorizontal(5);
     }
 }

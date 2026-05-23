@@ -20,7 +20,9 @@ public sealed class ReportsController : ControllerBase
     }
 
     private const string ExcelContentType =
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private const string PdfContentType = "application/pdf";
 
     [HttpGet("employee-summary")]
     [Authorize(Policy = Permissions.Employee.Read)]
@@ -73,6 +75,23 @@ public sealed class ReportsController : ControllerBase
     CancellationToken cancellationToken)
     {
         var file = await _reportService.ExportAuditReportExcelAsync(
+            request,
+            cancellationToken);
+
+        return File(
+            file.Content,
+            file.ContentType,
+            file.FileName);
+    }
+
+    [HttpGet("employee-summary/export/pdf")]
+    [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesFile(PdfContentType)]
+    public async Task<IActionResult> ExportEmployeeSummaryPdf(
+    [FromQuery] EmployeeSummaryReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var file = await _reportService.ExportEmployeeSummaryPdfAsync(
             request,
             cancellationToken);
 

@@ -39,6 +39,17 @@ export class ReportService {
         );
     }
 
+    exportEmployeeSummaryPdf(
+        request: EmployeeSummaryReportRequest = {}
+    ): Observable<FileResponse> {
+        return this.reportsClient.exportEmployeeSummaryPdf(
+            request.companyID?.trim() || undefined,
+            request.isActive ?? undefined,
+            request.hireDateFrom || undefined,
+            request.hireDateTo || undefined
+        );
+    }
+
     getAuditReport(
         request: AuditReportRequest = {}
     ): Observable<AuditReportResponse> {

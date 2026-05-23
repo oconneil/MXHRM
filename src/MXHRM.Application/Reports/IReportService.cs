@@ -13,6 +13,10 @@ public interface IReportService
         EmployeeSummaryReportRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ReportFileResponse> ExportEmployeeSummaryPdfAsync(
+        EmployeeSummaryReportRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<AuditReportResponse> GetAuditReportAsync(
         AuditReportRequest request,
         CancellationToken cancellationToken = default);

@@ -26,6 +26,7 @@ export class EmployeeSummaryReport implements OnInit {
   report = signal<EmployeeSummaryReportResponse | null>(null);
   loading = signal(false);
   exporting = signal(false);
+  exportingPdf = signal(false);
   errorMessage = signal('');
 
   companyID = signal('');
@@ -112,6 +113,38 @@ export class EmployeeSummaryReport implements OnInit {
       error: err => {
         this.errorMessage.set(err?.error?.message ?? 'ไม่สามารถ export Excel ได้');
         this.exporting.set(false);
+      }
+    });
+  }
+
+  exportPdf(): void {
+    this.exportingPdf.set(true);
+    this.errorMessage.set('');
+
+    this.reportService.exportEmployeeSummaryPdf(this.buildRequest()).subscribe({
+      next: response => {
+        const blob = response.data;
+
+        if (!blob) {
+          this.errorMessage.set('ไม่พบข้อมูลไฟล์สำหรับ export PDF');
+          this.exportingPdf.set(false);
+          return;
+        }
+
+        const fileName = response.fileName ?? 'employee-summary-report.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.click();
+
+        window.URL.revokeObjectURL(url);
+        this.exportingPdf.set(false);
+      },
+      error: err => {
+        this.errorMessage.set(err?.error?.message ?? 'ไม่สามารถ export PDF ได้');
+        this.exportingPdf.set(false);
       }
     });
   }
