@@ -6,6 +6,7 @@ using MXHRM.Application.Reports.DTOs;
 using MXHRM.Application.Reports.Exports;
 using MXHRM.Domain.Reports;
 using MXHRM.Infrastructure.Data;
+using MXHRM.Application.Common.Realtime;
 
 namespace MXHRM.Infrastructure.Reports;
 
@@ -14,14 +15,17 @@ public sealed class GeneratedReportJob
     private readonly AppDbContext _db;
     private readonly IReportService _reportService;
     private readonly ILogger<GeneratedReportJob> _logger;
+    private readonly IRealtimeNotifier _realtimeNotifier;
 
     public GeneratedReportJob(
-        AppDbContext db,
-        IReportService reportService,
-        ILogger<GeneratedReportJob> logger)
+    AppDbContext db,
+    IReportService reportService,
+    IRealtimeNotifier realtimeNotifier,
+    ILogger<GeneratedReportJob> logger)
     {
         _db = db;
         _reportService = reportService;
+        _realtimeNotifier = realtimeNotifier;
         _logger = logger;
     }
 
@@ -45,6 +49,9 @@ public sealed class GeneratedReportJob
         generatedReport.StartedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
 
+        // Notify client about status update
+        await NotifyAsync(generatedReport, cancellationToken);
+
         try
         {
             var request = JsonSerializer.Deserialize<CreateGeneratedReportRequest>(
@@ -66,6 +73,9 @@ public sealed class GeneratedReportJob
 
             await _db.SaveChangesAsync(cancellationToken);
 
+            // Notify client about status update
+            await NotifyAsync(generatedReport, cancellationToken);
+
             _logger.LogInformation(
                 "Generated report {GeneratedReportId} completed.",
                 generatedReportId);
@@ -77,6 +87,9 @@ public sealed class GeneratedReportJob
             generatedReport.CompletedAtUtc = DateTime.UtcNow;
 
             await _db.SaveChangesAsync(cancellationToken);
+
+            // Notify client about status update
+            await NotifyAsync(generatedReport, cancellationToken);
 
             _logger.LogError(
                 ex,
@@ -115,5 +128,46 @@ public sealed class GeneratedReportJob
 
         throw new NotSupportedException(
             $"Report type '{request.ReportType}' with format '{request.Format}' is not supported.");
+    }
+
+    private async Task NotifyAsync(
+    GeneratedReport generatedReport,
+    CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(generatedReport.RequestedByUserId))
+        {
+            return;
+        }
+
+        await _realtimeNotifier.SendToUserAsync(
+            generatedReport.RequestedByUserId,
+            new RealtimeMessage
+            {
+                Type = "generated-report.updated",
+                Title = "Generated report updated",
+                Message = $"Report status is {generatedReport.Status}.",
+                Data = MapToResponse(generatedReport)
+            },
+            cancellationToken);
+    }
+
+    private static GeneratedReportResponse MapToResponse(
+    GeneratedReport generatedReport)
+    {
+        return new GeneratedReportResponse
+        {
+            Id = generatedReport.Id,
+            ReportType = generatedReport.ReportType,
+            Format = generatedReport.Format,
+            Status = generatedReport.Status,
+            FileName = generatedReport.FileName,
+            ContentType = generatedReport.ContentType,
+            ErrorMessage = generatedReport.ErrorMessage,
+            RequestedByUserId = generatedReport.RequestedByUserId,
+            RequestedByUserName = generatedReport.RequestedByUserName,
+            CreatedAtUtc = generatedReport.CreatedAtUtc,
+            StartedAtUtc = generatedReport.StartedAtUtc,
+            CompletedAtUtc = generatedReport.CompletedAtUtc
+        };
     }
 }

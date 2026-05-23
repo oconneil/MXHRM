@@ -21,6 +21,10 @@ using MXHRM.Api.Services;
 using MXHRM.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using MXHRM.Api.Swagger;
+using MXHRM.Api.Hubs;
+using MXHRM.Application.Common.Realtime;
+using Microsoft.AspNetCore.SignalR;
+using MXHRM.Api.SignalR;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -42,7 +46,14 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+// Register the SignalR real-time notifier for sending real-time updates to clients
+builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
+
 builder.Services.AddControllers();
+
+// Add SignalR services and configure the user ID provider for SignalR to use the current user's ID
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, UserIdProvider>();
 
 // Configure custom error response for model validation errors
 builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -148,6 +159,20 @@ builder.Services.AddAuthentication(options =>
         // Custom events for handling authentication failures and forbidden responses
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrWhiteSpace(accessToken) &&
+                    path.StartsWithSegments("/hubs/realtime"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
+
             OnChallenge = async context =>
             {
                 context.HandleResponse();
@@ -201,6 +226,7 @@ builder.Services.AddCors(options =>
             .WithOrigins("http://localhost:4200", "https://localhost:4200")
             .AllowAnyHeader()
             .AllowAnyMethod()
+            .AllowCredentials()
             .WithExposedHeaders("Content-Disposition");
     });
 });
@@ -253,6 +279,9 @@ else
 
 // Map controllers
 app.MapControllers();
+
+// Map the SignalR hub for real-time communication
+app.MapHub<RealtimeHub>("/hubs/realtime");
 
 // Seed initial data (roles and admin user)
 await IdentitySeeder.SeedRolesAsync(app.Services);

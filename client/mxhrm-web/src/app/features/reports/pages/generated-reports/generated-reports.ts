@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { KENDO_BUTTONS } from '@progress/kendo-angular-buttons';
 import { KENDO_GRID } from '@progress/kendo-angular-grid';
@@ -8,6 +8,7 @@ import {
   GeneratedReportResponse
 } from '../../../../core/api/api-client';
 import { GeneratedReportService } from '../../services/generated-report';
+import { RealtimeService } from '../../../../core/realtime/realtime';
 
 @Component({
   selector: 'app-generated-reports',
@@ -27,6 +28,7 @@ export class GeneratedReports implements OnInit {
   loading = signal(false);
   creating = signal(false);
   errorMessage = signal('');
+  realtimeNotice = signal('');
 
   reportType = signal('');
   format = signal('');
@@ -41,9 +43,28 @@ export class GeneratedReports implements OnInit {
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize()))
   );
 
-  constructor(private readonly generatedReportService: GeneratedReportService) { }
+  realtimeConnected = computed(() => this.realtimeService.connected());
+
+  constructor(
+    private readonly generatedReportService: GeneratedReportService,
+    private readonly realtimeService: RealtimeService
+  ) {
+    effect(() => {
+      const message = this.realtimeService.latestMessage();
+
+      if (message?.type !== 'generated-report.updated' || !message.data) {
+        return;
+      }
+
+      const updatedReport = message.data as GeneratedReportResponse;
+
+      this.realtimeNotice.set(message.message ?? this.buildRealtimeNotice(updatedReport));
+      this.upsertRealtimeReport(updatedReport);
+    });
+  }
 
   ngOnInit(): void {
+    this.realtimeService.start();
     this.loadReports();
   }
 
@@ -160,5 +181,91 @@ export class GeneratedReports implements OnInit {
 
     this.page.update(value => value - 1);
     this.loadReports();
+  }
+
+  canDownload(report: GeneratedReportResponse): boolean {
+    return !!report.id && report.status === 'Completed';
+  }
+
+  getDownloadButtonText(report: GeneratedReportResponse): string {
+    if (report.status === 'Processing') {
+      return 'Preparing...';
+    }
+
+    if (report.status === 'Failed') {
+      return 'Failed';
+    }
+
+    if (report.status === 'Pending') {
+      return 'Waiting...';
+    }
+
+    return 'Download';
+  }
+
+  getStatusHelpText(status?: string | null): string {
+    switch (status) {
+      case 'Pending':
+        return 'Waiting for Hangfire worker';
+      case 'Processing':
+        return 'Generating file in background';
+      case 'Completed':
+        return 'Ready to download';
+      case 'Failed':
+        return 'Generation failed';
+      default:
+        return 'Unknown status';
+    }
+  }
+
+  private upsertRealtimeReport(updatedReport: GeneratedReportResponse): void {
+    if (!updatedReport.id) {
+      return;
+    }
+
+    let alreadyExists = false;
+    const shouldShow = this.matchesCurrentFilters(updatedReport);
+
+    this.reports.update(reports => {
+      alreadyExists = reports.some(report => report.id === updatedReport.id);
+
+      if (!shouldShow) {
+        return reports.filter(report => report.id !== updatedReport.id);
+      }
+
+      if (alreadyExists) {
+        return reports.map(report =>
+          report.id === updatedReport.id ? updatedReport : report
+        );
+      }
+
+      if (this.page() !== 1) {
+        return reports;
+      }
+
+      return [updatedReport, ...reports].slice(0, this.pageSize());
+    });
+
+    if (shouldShow && !alreadyExists && this.page() === 1) {
+      this.totalItems.update(value => value + 1);
+    }
+
+    if (!shouldShow && alreadyExists) {
+      this.totalItems.update(value => Math.max(0, value - 1));
+    }
+  }
+
+  private matchesCurrentFilters(report: GeneratedReportResponse): boolean {
+    const reportType = this.reportType();
+    const format = this.format();
+    const status = this.status();
+
+    return (!reportType || report.reportType === reportType) &&
+      (!format || report.format === format) &&
+      (!status || report.status === status);
+  }
+
+  private buildRealtimeNotice(report: GeneratedReportResponse): string {
+    return `${report.reportType ?? 'Report'} ${report.format ?? ''} is now ${report.status ?? 'updated'}.`;
   }
 }
