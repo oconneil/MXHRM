@@ -1252,10 +1252,118 @@ Reducing Manual HttpClient
 
 ---
 
+## ✅ Project 9.4: Audit Report Screen
+
+### สิ่งที่ทำ
+
+```text
+สร้าง Audit Report DTO / Request / Response
+เพิ่ม GetAuditReportAsync ใน IReportService
+Implement audit aggregate query ใน Infrastructure ReportService
+เพิ่ม ReportsController endpoint GET /api/reports/audit
+Regenerate NSwag client
+เพิ่ม ReportService.getAuditReport ใน Angular
+สร้าง Audit Report page
+เพิ่ม filters สำหรับ TableName / Action / UserId / FromUtc / ToUtc
+เพิ่ม summary card
+เพิ่ม Kendo Grid summary: By Action / By Table / By User
+เพิ่ม route /reports/audit
+เพิ่ม drawer menu Audit Report
+ป้องกัน route และ menu ด้วย audit.read permission
+ตรวจ type / build / browser flow ผ่านแล้ว
+```
+
+### จุดเชื่อมต่อหลัก
+
+```text
+AuditLogs table
+   ↓
+Infrastructure ReportService
+   ↓
+IReportService
+   ↓
+ReportsController
+   ↓
+Swagger / NSwag
+   ↓
+ReportsClient
+   ↓
+Angular ReportService
+   ↓
+AuditReport Page
+```
+
+### Skill ที่ได้
+
+```text
+Audit Reporting
+Aggregate Report Query
+Report Summary UX
+Permission-protected Report Route
+NSwag Report API Integration
+Kendo Grid Report Layout
+```
+
+---
+
+## ✅ Project 9.5: Audit Report Excel Export
+
+### สิ่งที่ทำ
+
+```text
+เพิ่ม ExportAuditReportExcelAsync ใน IReportService
+Implement Audit Report Excel export ใน Infrastructure ReportService
+Reuse GetAuditReportAsync เพื่อลด duplicate query logic
+สร้าง Excel workbook ด้วย ClosedXML
+เพิ่ม worksheets: Summary / By Action / By Table / By User
+เพิ่ม ReportsController endpoint GET /api/reports/audit/export/excel
+ใช้ ProducesFile เพื่อให้ Swagger อธิบาย file response
+Regenerate NSwag client ให้ได้ FileResponse
+เพิ่ม ReportService.exportAuditReportExcel ใน Angular
+เพิ่ม Export Excel button ใน Audit Report page
+ใช้ FileResponse.data และ FileResponse.fileName สำหรับ download
+ตรวจ export แบบมี filter และไม่มี filter ผ่านแล้ว
+```
+
+### จุดเชื่อมต่อหลัก
+
+```text
+AuditReport Component
+   ↓
+ReportService.exportAuditReportExcel()
+   ↓
+ReportsClient.exportAuditReportExcel()
+   ↓
+ReportsController.ExportAuditReportExcel
+   ↓
+IReportService.ExportAuditReportExcelAsync
+   ↓
+GetAuditReportAsync
+   ↓
+ClosedXML workbook
+   ↓
+FileResponse
+   ↓
+Browser download .xlsx
+```
+
+### Skill ที่ได้
+
+```text
+Report Export Pattern
+ClosedXML Workbook Design
+Reusable ReportFileResponse
+Swagger File Response Codegen
+NSwag FileResponse Download
+Excel Export UX
+```
+
+---
+
 # 📊 Current Status
 
 ```text
-Progress: ~99% (Project 9.3 NSwag Client Generation Complete)
+Progress: ~99.5% (Project 9.5 Audit Report Excel Export Complete)
 ```
 
 ตอนนี้คุณมี:
@@ -1328,6 +1436,10 @@ Progress: ~99% (Project 9.3 NSwag Client Generation Complete)
 ✅ Swagger binary file metadata
 ✅ NSwag generated Angular client
 ✅ ReportsClient integration
+✅ Audit Report API
+✅ Audit Report UI
+✅ Audit Report Excel export
+✅ Report export pattern reusable across Employee and Audit
 ✅ Production-ready base
 ```
 
@@ -1345,7 +1457,6 @@ Junior → Mid-level Full-stack Developer
 ❌ Resource-based Permission
 ❌ Permission versioning / token invalidation after permission change
 ❌ Dashboard widgets
-❌ Audit report screen
 ❌ Export PDF reports
 ❌ CI/CD (GitHub Actions)
 ❌ Deployment baseline (Dockerize API/Angular + Nginx)
@@ -1578,27 +1689,30 @@ Completed parts:
 Project 9.1 Employee Summary Report API + UI
 Project 9.2 Employee Summary Excel Export
 Project 9.3 NSwag Client Generation
+Project 9.4 Audit Report Screen
+Project 9.5 Audit Report Excel Export
 ```
 
 Completed output:
 
 ```text
 Employee Summary Report ใช้งานได้
+Audit Report ใช้งานได้
 Report filter ใช้งานได้
-Excel export/download ใช้งานได้
+Excel export/download ใช้งานได้ทั้ง Employee Summary และ Audit Report
 Angular report service ใช้ NSwag generated ReportsClient
 Swagger รองรับ file response สำหรับ code generation
 ลด manual HttpClient สำหรับ report flow
+มี reusable ReportFileResponse และ FileResponse download pattern
 ต่อยอดจาก Hangfire EmployeeReportJob ได้บางส่วน
 ```
 
 Remaining scope:
 
 ```text
-Project 9.4 Audit Report Screen
-Project 9.5 PDF Export หรือ export format เพิ่มเติม
-Project 9.6 Hangfire report file generation / async report download
-Project 9.7 Extend NSwag usage ไปยัง feature services อื่น
+Project 9.6 PDF Export หรือ export format เพิ่มเติม
+Project 9.7 Hangfire report file generation / async report download
+Project 9.8 Extend NSwag usage ไปยัง feature services อื่น
 ```
 
 Expected final output:
@@ -1688,7 +1802,9 @@ CI/CD + deployment baseline
 ✔ Kendo UI for Angular
 ✔ Access Denied / Not Found UX
 ✔ Employee Summary Report
+✔ Audit Report
 ✔ Excel export with ClosedXML
+✔ Reusable report file export pattern
 ✔ Swagger / OpenAPI client generation
 ✔ NSwag generated Angular API client
 ✔ Completed auth/security foundation
@@ -1729,7 +1845,9 @@ Project 8 completed - Enterprise UI + Kendo Grid + Admin UX
 Project 9.1 completed - Employee Summary Report API + UI
 Project 9.2 completed - Employee Summary Excel Export
 Project 9.3 completed - NSwag Client Generation
-Next: Project 9.4 Audit Report Screen
+Project 9.4 completed - Audit Report Screen
+Project 9.5 completed - Audit Report Excel Export
+Next: Project 9.6 PDF Export หรือ export format เพิ่มเติม
 ```
 
 ---
