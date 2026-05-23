@@ -51,7 +51,7 @@ public sealed class ReportsController : ControllerBase
             file.ContentType,
             file.FileName);
     }
-    
+
     [HttpGet("audit")]
     [Authorize(Policy = Permissions.Audit.Read)]
     public async Task<ActionResult<AuditReportResponse>> GetAuditReport(
@@ -63,5 +63,22 @@ public sealed class ReportsController : ControllerBase
             cancellationToken);
 
         return Ok(report);
+    }
+
+    [HttpGet("audit/export/excel")]
+    [Authorize(Policy = Permissions.Audit.Read)]
+    [ProducesFile(ExcelContentType)]
+    public async Task<IActionResult> ExportAuditReportExcel(
+    [FromQuery] AuditReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var file = await _reportService.ExportAuditReportExcelAsync(
+            request,
+            cancellationToken);
+
+        return File(
+            file.Content,
+            file.ContentType,
+            file.FileName);
     }
 }

@@ -1757,3 +1757,8 @@ dotnet nuget add source https://nuget.telerik.com/v3/index.json \
   --password YOUR_TELERIK_API_KEY \
   --store-password-in-clear-text
 ```
+
+# NSwag Generate
+```bash
+dotnet nswag run nswag.json
+```

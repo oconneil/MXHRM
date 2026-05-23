@@ -50,4 +50,16 @@ export class ReportService {
             request.toUtc || undefined
         );
     }
+
+    exportAuditReportExcel(
+        request: AuditReportRequest = {}
+    ): Observable<FileResponse> {
+        return this.reportsClient.exportAuditReportExcel(
+            request.tableName?.trim() || undefined,
+            request.action?.trim() || undefined,
+            request.userId?.trim() || undefined,
+            request.fromUtc || undefined,
+            request.toUtc || undefined
+        );
+    }
 }

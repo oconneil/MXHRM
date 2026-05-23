@@ -27,6 +27,7 @@ import { ReportService } from '../../services/report';
 export class AuditReport implements OnInit {
   report = signal<AuditReportResponse | null>(null);
   loading = signal(false);
+  exporting = signal(false);
   errorMessage = signal('');
 
   tableName = signal('');
@@ -86,5 +87,37 @@ export class AuditReport implements OnInit {
       fromUtc: this.fromUtc() || null,
       toUtc: this.toUtc() || null
     };
+  }
+
+  exportExcel(): void {
+    this.exporting.set(true);
+    this.errorMessage.set('');
+
+    this.reportService.exportAuditReportExcel(this.buildRequest()).subscribe({
+      next: response => {
+        const blob = response.data;
+
+        if (!blob) {
+          this.errorMessage.set('ไม่พบข้อมูลไฟล์สำหรับ export');
+          this.exporting.set(false);
+          return;
+        }
+
+        const fileName = response.fileName ?? 'audit-report.xlsx';
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.click();
+
+        window.URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: err => {
+        this.errorMessage.set(err?.error?.message ?? 'ไม่สามารถ export Excel ได้');
+        this.exporting.set(false);
+      }
+    });
   }
 }

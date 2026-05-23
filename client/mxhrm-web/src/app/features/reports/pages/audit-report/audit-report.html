@@ -6,9 +6,14 @@
         </p>
     </div>
 
-    <div>
+    <div class="d-flex gap-2">
         <button kendoButton type="button" fillMode="outline" (click)="loadReport()">
             Refresh
+        </button>
+
+        <button kendoButton type="button" themeColor="primary" (click)="exportExcel()"
+            [disabled]="exporting() || loading()">
+            {{ exporting() ? 'Exporting...' : 'Export Excel' }}
         </button>
     </div>
 </div>

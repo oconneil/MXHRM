@@ -242,4 +242,85 @@ public sealed class ReportService : IReportService
             ByUser = byUser
         };
     }
+
+    public async Task<ReportFileResponse> ExportAuditReportExcelAsync(
+    AuditReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var report = await GetAuditReportAsync(request, cancellationToken);
+
+        using var workbook = new XLWorkbook();
+
+        var summaryWorksheet = workbook.Worksheets.Add("Summary");
+
+        summaryWorksheet.Cell(1, 1).Value = "Audit Report";
+        summaryWorksheet.Cell(2, 1).Value = "Generated At UTC";
+        summaryWorksheet.Cell(2, 2).Value = report.GeneratedAtUtc;
+
+        summaryWorksheet.Cell(4, 1).Value = "Total Audit Logs";
+        summaryWorksheet.Cell(4, 2).Value = report.TotalAuditLogs;
+
+        summaryWorksheet.Columns().AdjustToContents();
+
+        var byActionWorksheet = workbook.Worksheets.Add("By Action");
+
+        byActionWorksheet.Cell(1, 1).Value = "Action";
+        byActionWorksheet.Cell(1, 2).Value = "Count";
+
+        for (var i = 0; i < report.ByAction.Count; i++)
+        {
+            var row = i + 2;
+            var item = report.ByAction[i];
+
+            byActionWorksheet.Cell(row, 1).Value = item.Action;
+            byActionWorksheet.Cell(row, 2).Value = item.Count;
+        }
+
+        byActionWorksheet.Columns().AdjustToContents();
+
+        var byTableWorksheet = workbook.Worksheets.Add("By Table");
+
+        byTableWorksheet.Cell(1, 1).Value = "Table Name";
+        byTableWorksheet.Cell(1, 2).Value = "Count";
+
+        for (var i = 0; i < report.ByTable.Count; i++)
+        {
+            var row = i + 2;
+            var item = report.ByTable[i];
+
+            byTableWorksheet.Cell(row, 1).Value = item.TableName;
+            byTableWorksheet.Cell(row, 2).Value = item.Count;
+        }
+
+        byTableWorksheet.Columns().AdjustToContents();
+
+        var byUserWorksheet = workbook.Worksheets.Add("By User");
+
+        byUserWorksheet.Cell(1, 1).Value = "User ID";
+        byUserWorksheet.Cell(1, 2).Value = "User Name";
+        byUserWorksheet.Cell(1, 3).Value = "Count";
+
+        for (var i = 0; i < report.ByUser.Count; i++)
+        {
+            var row = i + 2;
+            var item = report.ByUser[i];
+
+            byUserWorksheet.Cell(row, 1).Value = item.UserId ?? "-";
+            byUserWorksheet.Cell(row, 2).Value = item.UserName ?? "-";
+            byUserWorksheet.Cell(row, 3).Value = item.Count;
+        }
+
+        byUserWorksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        return new ReportFileResponse
+        {
+            Content = stream.ToArray(),
+            ContentType =
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            FileName = $"audit-report-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx"
+        };
+    }
 }
