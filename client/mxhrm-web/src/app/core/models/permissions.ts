@@ -13,5 +13,8 @@ export const Permissions = {
   },
   Activity: {
     Read: 'activity.read'
+  },
+  Report: {
+    Manage: 'report.manage'
   }
 } as const;

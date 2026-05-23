@@ -41,7 +41,8 @@ public static class IdentitySeeder
             new() { Code = AppPermissions.Employee.Delete, Name = "Employee Delete" },
             new() { Code = AppPermissions.Role.Manage, Name = "Role Manage" },
             new() { Code = AppPermissions.Audit.Read, Name = "Audit Read" },
-            new() { Code = AppPermissions.Activity.Read, Name = "Activity Read" }
+            new() { Code = AppPermissions.Activity.Read, Name = "Activity Read" },
+            new() { Code = AppPermissions.Report.Manage, Name = "Report Manage" }
         };
 
         foreach (var p in permissionSeeds)
@@ -76,17 +77,18 @@ public static class IdentitySeeder
                 AppPermissions.Employee.Delete,
                 AppPermissions.Role.Manage,
                 AppPermissions.Audit.Read,
-                AppPermissions.Activity.Read
+                AppPermissions.Activity.Read,
+                AppPermissions.Report.Manage
             },
             [hrRole.Id] = new[]
             {
-            AppPermissions.Employee.Read,
-            AppPermissions.Employee.Create,
-            AppPermissions.Employee.Update
+                AppPermissions.Employee.Read,
+                AppPermissions.Employee.Create,
+                AppPermissions.Employee.Update
             },
             [employeeRole.Id] = new[]
             {
-            AppPermissions.Employee.Read
+                AppPermissions.Employee.Read
             }
         };
 

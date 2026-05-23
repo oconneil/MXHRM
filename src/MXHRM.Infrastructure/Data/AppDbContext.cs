@@ -5,6 +5,7 @@ using MXHRM.Infrastructure.Auth;
 using MXHRM.Infrastructure.Authorization;
 using MXHRM.Infrastructure.Identity;
 using MXHRM.Infrastructure.Auditing;
+using MXHRM.Domain.Reports;
 
 namespace MXHRM.Infrastructure.Data;
 
@@ -21,6 +22,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
+    public DbSet<GeneratedReport> GeneratedReports => Set<GeneratedReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -220,6 +222,47 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 x.CreatedAtUtc
             })
                 .HasDatabaseName("IX_UserActivityLogs_ActivityType_CreatedAtUtc");
+        });
+
+        modelBuilder.Entity<GeneratedReport>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.ReportType)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Format)
+                .HasMaxLength(20)
+                .IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.FileName)
+                .HasMaxLength(255);
+
+            entity.Property(x => x.ContentType)
+                .HasMaxLength(150);
+
+            entity.Property(x => x.ErrorMessage)
+                .HasMaxLength(2000);
+
+            entity.Property(x => x.RequestedByUserId)
+                .HasMaxLength(450);
+
+            entity.Property(x => x.RequestedByUserName)
+                .HasMaxLength(256);
+
+            entity.Property(x => x.Content)
+                .HasColumnType("varbinary(max)");
+
+            entity.HasIndex(x => x.Status);
+
+            entity.HasIndex(x => x.ReportType);
+
+            entity.HasIndex(x => x.CreatedAtUtc);
         });
 
     }

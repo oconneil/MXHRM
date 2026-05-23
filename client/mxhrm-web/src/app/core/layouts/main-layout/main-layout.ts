@@ -88,6 +88,12 @@ export class MainLayout {
       route: '/reports/audit',
       svgIcon: folderIcon,
       permission: Permissions.Audit.Read
+    },
+    {
+      text: 'Generated Reports',
+      route: '/reports/generated',
+      svgIcon: folderIcon,
+      permission: Permissions.Report.Manage
     }
   ];
 

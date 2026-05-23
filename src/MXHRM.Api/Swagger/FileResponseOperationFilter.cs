@@ -19,20 +19,23 @@ public sealed class FileResponseOperationFilter : IOperationFilter
 
         operation.Responses ??= new OpenApiResponses();
 
-        operation.Responses["200"] = new OpenApiResponse
-        {
-            Description = "File",
-            Content = new Dictionary<string, OpenApiMediaType>
-            {
-                [producesFileAttribute.ContentType] = new OpenApiMediaType
+        var content = producesFileAttribute.ContentTypes
+            .Where(contentType => !string.IsNullOrWhiteSpace(contentType))
+            .ToDictionary(
+                contentType => contentType,
+                _ => new OpenApiMediaType
                 {
                     Schema = new OpenApiSchema
                     {
                         Type = JsonSchemaType.String,
                         Format = "binary"
                     }
-                }
-            }
+                });
+
+        operation.Responses["200"] = new OpenApiResponse
+        {
+            Description = "File",
+            Content = content
         };
     }
 }

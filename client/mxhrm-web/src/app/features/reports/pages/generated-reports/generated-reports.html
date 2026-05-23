@@ -1,0 +1,156 @@
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">Generated Reports</h1>
+        <p class="text-muted mb-0">
+            Create async report jobs, track status, and download completed files.
+        </p>
+    </div>
+
+    <button kendoButton type="button" fillMode="outline" (click)="loadReports()">
+        Refresh
+    </button>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Create Async Report</h2>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" [ngModel]="createReportType()"
+                    (ngModelChange)="createReportType.set($event)">
+                    <option value="EmployeeSummary">Employee Summary</option>
+                    <option value="AuditReport">Audit Report</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Format</label>
+                <select class="form-select" [ngModel]="createFormat()" (ngModelChange)="createFormat.set($event)">
+                    <option value="Pdf">PDF</option>
+                    <option value="Excel">Excel</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <button kendoButton type="button" themeColor="primary" (click)="createReport()" [disabled]="creating()">
+                    {{ creating() ? 'Creating...' : 'Create Report Job' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Filters</h2>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" [ngModel]="reportType()" (ngModelChange)="reportType.set($event)">
+                    <option value="">All</option>
+                    <option value="EmployeeSummary">Employee Summary</option>
+                    <option value="AuditReport">Audit Report</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Format</label>
+                <select class="form-select" [ngModel]="format()" (ngModelChange)="format.set($event)">
+                    <option value="">All</option>
+                    <option value="Pdf">PDF</option>
+                    <option value="Excel">Excel</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" [ngModel]="status()" (ngModelChange)="status.set($event)">
+                    <option value="">All</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Failed">Failed</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button kendoButton type="button" themeColor="primary" (click)="applyFilters()">
+                    Apply
+                </button>
+
+                <button kendoButton type="button" fillMode="outline" (click)="clearFilters()">
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (loading()) {
+<div class="alert alert-info">Loading generated reports...</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <kendo-grid [data]="reports()" [height]="520">
+            <kendo-grid-column field="id" title="ID" [width]="90">
+            </kendo-grid-column>
+
+            <kendo-grid-column field="reportType" title="Report Type" [width]="180">
+            </kendo-grid-column>
+
+            <kendo-grid-column field="format" title="Format" [width]="120">
+            </kendo-grid-column>
+
+            <kendo-grid-column field="status" title="Status" [width]="140">
+                <ng-template kendoGridCellTemplate let-dataItem>
+                    <span class="status-badge" [class]="dataItem.status">
+                        {{ dataItem.status }}
+                    </span>
+                </ng-template>
+            </kendo-grid-column>
+
+            <kendo-grid-column field="fileName" title="File Name">
+            </kendo-grid-column>
+
+            <kendo-grid-column field="createdAtUtc" title="Created At" [width]="180">
+                <ng-template kendoGridCellTemplate let-dataItem>
+                    {{ dataItem.createdAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}
+                </ng-template>
+            </kendo-grid-column>
+
+            <kendo-grid-column title="Action" [width]="150">
+                <ng-template kendoGridCellTemplate let-dataItem>
+                    <button kendoButton type="button" size="small" themeColor="primary" (click)="download(dataItem)"
+                        [disabled]="dataItem.status !== 'Completed'">
+                        Download
+                    </button>
+                </ng-template>
+            </kendo-grid-column>
+        </kendo-grid>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="text-muted">
+                Page {{ page() }} of {{ totalPages() }} · Total {{ totalItems() }}
+            </span>
+
+            <div class="d-flex gap-2">
+                <button kendoButton type="button" fillMode="outline" (click)="previousPage()" [disabled]="page() <= 1">
+                    Previous
+                </button>
+
+                <button kendoButton type="button" fillMode="outline" (click)="nextPage()"
+                    [disabled]="page() >= totalPages()">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

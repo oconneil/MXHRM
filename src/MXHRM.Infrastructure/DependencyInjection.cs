@@ -102,6 +102,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IUserActivityLogService, UserActivityLogService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IAsyncReportService, AsyncReportService>();
+        services.AddScoped<GeneratedReportJob>();
 
         return services;
     }

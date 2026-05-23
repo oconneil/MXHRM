@@ -3,10 +3,10 @@ namespace MXHRM.Api.Swagger;
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class ProducesFileAttribute : Attribute
 {
-    public ProducesFileAttribute(string contentType)
+    public ProducesFileAttribute(params string[] contentTypes)
     {
-        ContentType = contentType;
+        ContentTypes = contentTypes;
     }
 
-    public string ContentType { get; }
+    public IReadOnlyList<string> ContentTypes { get; }
 }

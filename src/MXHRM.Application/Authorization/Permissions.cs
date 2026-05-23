@@ -24,4 +24,9 @@ public static class Permissions
     {
         public const string Read = "activity.read";
     }
+
+    public static class Report
+    {
+        public const string Manage = "report.manage";
+    }
 }

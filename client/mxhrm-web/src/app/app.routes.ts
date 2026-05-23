@@ -117,6 +117,16 @@ export const routes: Routes = [
         data: {
           permission: Permissions.Audit.Read
         }
+      },
+      {
+        path: 'reports/generated',
+        loadComponent: () =>
+          import('./features/reports/pages/generated-reports/generated-reports')
+            .then(m => m.GeneratedReports),
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Report.Manage
+        }
       }
     ]
   },

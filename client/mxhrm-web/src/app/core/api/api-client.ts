@@ -944,6 +944,286 @@ export class EmployeesClient implements IEmployeesClient {
     }
 }
 
+export interface IGeneratedReportsClient {
+    /**
+     * @param body (optional) 
+     * @return Accepted
+     */
+    create(body?: CreateGeneratedReportRequest | undefined): Observable<GeneratedReportResponse>;
+    /**
+     * @param reportType (optional) 
+     * @param format (optional) 
+     * @param status (optional) 
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @return OK
+     */
+    getAll(reportType?: string | undefined, format?: string | undefined, status?: string | undefined, page?: number | undefined, pageSize?: number | undefined): Observable<GeneratedReportResponsePagedResponse>;
+    /**
+     * @return OK
+     */
+    getById(id: number): Observable<GeneratedReportResponse>;
+    /**
+     * @return File
+     */
+    download(id: number): Observable<FileResponse>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class GeneratedReportsClient implements IGeneratedReportsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Accepted
+     */
+    create(body?: CreateGeneratedReportRequest | undefined): Observable<GeneratedReportResponse> {
+        let url_ = this.baseUrl + "/api/generated-reports";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GeneratedReportResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GeneratedReportResponse>;
+        }));
+    }
+
+    protected processCreate(response: HttpResponseBase): Observable<GeneratedReportResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 202) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result202: any = null;
+            result202 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GeneratedReportResponse;
+            return _observableOf(result202);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param reportType (optional) 
+     * @param format (optional) 
+     * @param status (optional) 
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @return OK
+     */
+    getAll(reportType?: string | undefined, format?: string | undefined, status?: string | undefined, page?: number | undefined, pageSize?: number | undefined): Observable<GeneratedReportResponsePagedResponse> {
+        let url_ = this.baseUrl + "/api/generated-reports?";
+        if (reportType === null)
+            throw new globalThis.Error("The parameter 'reportType' cannot be null.");
+        else if (reportType !== undefined)
+            url_ += "ReportType=" + encodeURIComponent("" + reportType) + "&";
+        if (format === null)
+            throw new globalThis.Error("The parameter 'format' cannot be null.");
+        else if (format !== undefined)
+            url_ += "Format=" + encodeURIComponent("" + format) + "&";
+        if (status === null)
+            throw new globalThis.Error("The parameter 'status' cannot be null.");
+        else if (status !== undefined)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAll(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAll(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GeneratedReportResponsePagedResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GeneratedReportResponsePagedResponse>;
+        }));
+    }
+
+    protected processGetAll(response: HttpResponseBase): Observable<GeneratedReportResponsePagedResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GeneratedReportResponsePagedResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getById(id: number): Observable<GeneratedReportResponse> {
+        let url_ = this.baseUrl + "/api/generated-reports/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GeneratedReportResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GeneratedReportResponse>;
+        }));
+    }
+
+    protected processGetById(response: HttpResponseBase): Observable<GeneratedReportResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GeneratedReportResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return File
+     */
+    download(id: number): Observable<FileResponse> {
+        let url_ = this.baseUrl + "/api/generated-reports/{id}/download";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDownload(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDownload(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FileResponse>;
+        }));
+    }
+
+    protected processDownload(response: HttpResponseBase): Observable<FileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return _observableOf({ fileName: fileName, data: responseBlob as any, status: status, headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IJobsClient {
     /**
      * @return OK
@@ -2590,6 +2870,14 @@ export interface AuditLogResponsePagedResponse {
     readonly hasPreviousPage?: boolean;
 }
 
+export interface AuditReportRequest {
+    tableName?: string | undefined;
+    action?: string | undefined;
+    userId?: string | undefined;
+    fromUtc?: string | undefined;
+    toUtc?: string | undefined;
+}
+
 export interface AuditReportResponse {
     totalAuditLogs?: number;
     generatedAtUtc?: string;
@@ -2631,6 +2919,13 @@ export interface CreateEmployeeRequest {
     createdBy?: string | undefined;
 }
 
+export interface CreateGeneratedReportRequest {
+    reportType?: string | undefined;
+    format?: string | undefined;
+    employeeSummaryRequest?: EmployeeSummaryReportRequest;
+    auditReportRequest?: AuditReportRequest;
+}
+
 export interface CreateRoleRequest {
     name?: string | undefined;
 }
@@ -2667,6 +2962,13 @@ export interface EmployeeSummaryByCompanyResponse {
     totalSalary?: number;
 }
 
+export interface EmployeeSummaryReportRequest {
+    companyID?: string | undefined;
+    isActive?: boolean | undefined;
+    hireDateFrom?: string | undefined;
+    hireDateTo?: string | undefined;
+}
+
 export interface EmployeeSummaryReportResponse {
     totalEmployees?: number;
     activeEmployees?: number;
@@ -2675,6 +2977,31 @@ export interface EmployeeSummaryReportResponse {
     totalSalary?: number;
     generatedAtUtc?: string;
     byCompany?: EmployeeSummaryByCompanyResponse[] | undefined;
+}
+
+export interface GeneratedReportResponse {
+    id?: number;
+    reportType?: string | undefined;
+    format?: string | undefined;
+    status?: string | undefined;
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+    errorMessage?: string | undefined;
+    requestedByUserId?: string | undefined;
+    requestedByUserName?: string | undefined;
+    createdAtUtc?: string;
+    startedAtUtc?: string | undefined;
+    completedAtUtc?: string | undefined;
+}
+
+export interface GeneratedReportResponsePagedResponse {
+    items?: GeneratedReportResponse[] | undefined;
+    page?: number;
+    pageSize?: number;
+    totalItems?: number;
+    totalPages?: number;
+    readonly hasNextPage?: boolean;
+    readonly hasPreviousPage?: boolean;
 }
 
 export interface LoginRequest {
