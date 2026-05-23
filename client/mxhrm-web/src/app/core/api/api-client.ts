@@ -1148,9 +1148,9 @@ export interface IReportsClient {
      * @param isActive (optional) 
      * @param hireDateFrom (optional) 
      * @param hireDateTo (optional) 
-     * @return OK
+     * @return File
      */
-    exportEmployeeSummaryExcel(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<void>;
+    exportEmployeeSummaryExcel(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<FileResponse>;
 }
 
 @Injectable({
@@ -1241,9 +1241,9 @@ export class ReportsClient implements IReportsClient {
      * @param isActive (optional) 
      * @param hireDateFrom (optional) 
      * @param hireDateTo (optional) 
-     * @return OK
+     * @return File
      */
-    exportEmployeeSummaryExcel(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<void> {
+    exportEmployeeSummaryExcel(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<FileResponse> {
         let url_ = this.baseUrl + "/api/Reports/employee-summary/export/excel?";
         if (companyID === null)
             throw new globalThis.Error("The parameter 'companyID' cannot be null.");
@@ -1267,6 +1267,7 @@ export class ReportsClient implements IReportsClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             })
         };
 
@@ -1277,24 +1278,31 @@ export class ReportsClient implements IReportsClient {
                 try {
                     return this.processExportEmployeeSummaryExcel(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<FileResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<FileResponse>;
         }));
     }
 
-    protected processExportEmployeeSummaryExcel(response: HttpResponseBase): Observable<void> {
+    protected processExportEmployeeSummaryExcel(response: HttpResponseBase): Observable<FileResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return _observableOf({ fileName: fileName, data: responseBlob as any, status: status, headers: _headers });
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2480,6 +2488,13 @@ export interface UserRoleResponse {
     userId?: string | undefined;
     userName?: string | undefined;
     roles?: RoleResponse[] | undefined;
+}
+
+export interface FileResponse {
+    data: Blob;
+    status: number;
+    fileName?: string;
+    headers?: { [name: string]: any };
 }
 
 export class SwaggerException extends Error {

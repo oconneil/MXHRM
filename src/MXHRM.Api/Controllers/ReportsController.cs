@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MXHRM.Api.Swagger;
 using MXHRM.Application.Authorization;
 using MXHRM.Application.Reports;
 using MXHRM.Application.Reports.DTOs;
@@ -18,6 +19,9 @@ public sealed class ReportsController : ControllerBase
         _reportService = reportService;
     }
 
+    private const string ExcelContentType =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     [HttpGet("employee-summary")]
     [Authorize(Policy = Permissions.Employee.Read)]
     public async Task<ActionResult<EmployeeSummaryReportResponse>> GetEmployeeSummary(
@@ -33,6 +37,7 @@ public sealed class ReportsController : ControllerBase
 
     [HttpGet("employee-summary/export/excel")]
     [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesFile(ExcelContentType)]
     public async Task<IActionResult> ExportEmployeeSummaryExcel(
     [FromQuery] EmployeeSummaryReportRequest request,
     CancellationToken cancellationToken)

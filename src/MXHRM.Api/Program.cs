@@ -20,6 +20,7 @@ using MXHRM.Api.Hangfire;
 using MXHRM.Api.Services;
 using MXHRM.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using MXHRM.Api.Swagger;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -81,6 +82,7 @@ builder.Services.AddEndpointsApiExplorer();
 // Configure Swagger with JWT authentication support
 builder.Services.AddSwaggerGen(options =>
 {
+    options.OperationFilter<FileResponseOperationFilter>();
     options.CustomOperationIds(apiDescription =>
     {
         if (apiDescription.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
@@ -90,7 +92,7 @@ builder.Services.AddSwaggerGen(options =>
 
         return null;
     });
-    
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

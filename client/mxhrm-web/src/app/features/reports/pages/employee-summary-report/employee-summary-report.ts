@@ -6,7 +6,7 @@ import { KENDO_GRID } from '@progress/kendo-angular-grid';
 import {
   EmployeeSummaryByCompanyResponse,
   EmployeeSummaryReportResponse
-} from '../../models/report';
+} from '../../../../core/api/api-client';
 import { ReportService } from '../../services/report';
 
 @Component({
@@ -90,7 +90,7 @@ export class EmployeeSummaryReport implements OnInit {
 
     this.reportService.exportEmployeeSummaryExcel(this.buildRequest()).subscribe({
       next: response => {
-        const blob = response.body;
+        const blob = response.data;
 
         if (!blob) {
           this.errorMessage.set('ไม่พบข้อมูลไฟล์สำหรับ export');
@@ -98,11 +98,7 @@ export class EmployeeSummaryReport implements OnInit {
           return;
         }
 
-        const fileName =
-          this.getFileNameFromContentDisposition(
-            response.headers.get('Content-Disposition')
-          ) ?? 'employee-summary-report.xlsx';
-
+        const fileName = response.fileName ?? 'employee-summary-report.xlsx';
         const url = window.URL.createObjectURL(blob);
         const anchor = document.createElement('a');
 
@@ -118,23 +114,5 @@ export class EmployeeSummaryReport implements OnInit {
         this.exporting.set(false);
       }
     });
-  }
-
-  private getFileNameFromContentDisposition(
-    contentDisposition: string | null
-  ): string | null {
-    if (!contentDisposition) {
-      return null;
-    }
-
-    const utf8FileNameMatch = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
-
-    if (utf8FileNameMatch?.[1]) {
-      return decodeURIComponent(utf8FileNameMatch[1]);
-    }
-
-    const fileNameMatch = /filename="?([^"]+)"?/i.exec(contentDisposition);
-
-    return fileNameMatch?.[1] ?? null;
   }
 }

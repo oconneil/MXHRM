@@ -5,6 +5,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { authInterceptor } from './core/interceptors/auth-interceptor';
 import { errorInterceptor } from './core/interceptors/error-interceptor';
 import { routes } from './app.routes';
+import { API_BASE_URL } from './core/api/api-client';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +16,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([
       errorInterceptor,
       authInterceptor
-    ]))
+    ])),
+    {
+      provide: API_BASE_URL,
+      useValue: environment.apiBaseUrl
+    }
   ]
 };
