@@ -82,6 +82,12 @@ export class MainLayout {
       route: '/reports/employee-summary',
       svgIcon: folderIcon,
       permission: Permissions.Employee.Read
+    },
+    {
+      text: 'Audit Report',
+      route: '/reports/audit',
+      svgIcon: folderIcon,
+      permission: Permissions.Audit.Read
     }
   ];
 

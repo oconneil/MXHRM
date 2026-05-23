@@ -23,3 +23,11 @@ export interface EmployeeSummaryReportResponse {
     generatedAtUtc: string;
     byCompany: EmployeeSummaryByCompanyResponse[];
 }
+
+export interface AuditReportRequest {
+    tableName?: string | null;
+    action?: string | null;
+    userId?: string | null;
+    fromUtc?: string | null;
+    toUtc?: string | null;
+}

@@ -12,4 +12,8 @@ public interface IReportService
     Task<ReportFileResponse> ExportEmployeeSummaryExcelAsync(
         EmployeeSummaryReportRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<AuditReportResponse> GetAuditReportAsync(
+        AuditReportRequest request,
+        CancellationToken cancellationToken = default);
 }

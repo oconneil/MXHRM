@@ -1151,6 +1151,15 @@ export interface IReportsClient {
      * @return File
      */
     exportEmployeeSummaryExcel(companyID?: string | undefined, isActive?: boolean | undefined, hireDateFrom?: string | undefined, hireDateTo?: string | undefined): Observable<FileResponse>;
+    /**
+     * @param tableName (optional) 
+     * @param action (optional) 
+     * @param userId (optional) 
+     * @param fromUtc (optional) 
+     * @param toUtc (optional) 
+     * @return OK
+     */
+    getAuditReport(tableName?: string | undefined, action?: string | undefined, userId?: string | undefined, fromUtc?: string | undefined, toUtc?: string | undefined): Observable<AuditReportResponse>;
 }
 
 @Injectable({
@@ -1303,6 +1312,81 @@ export class ReportsClient implements IReportsClient {
                 fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
             }
             return _observableOf({ fileName: fileName, data: responseBlob as any, status: status, headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param tableName (optional) 
+     * @param action (optional) 
+     * @param userId (optional) 
+     * @param fromUtc (optional) 
+     * @param toUtc (optional) 
+     * @return OK
+     */
+    getAuditReport(tableName?: string | undefined, action?: string | undefined, userId?: string | undefined, fromUtc?: string | undefined, toUtc?: string | undefined): Observable<AuditReportResponse> {
+        let url_ = this.baseUrl + "/api/Reports/audit?";
+        if (tableName === null)
+            throw new globalThis.Error("The parameter 'tableName' cannot be null.");
+        else if (tableName !== undefined)
+            url_ += "TableName=" + encodeURIComponent("" + tableName) + "&";
+        if (action === null)
+            throw new globalThis.Error("The parameter 'action' cannot be null.");
+        else if (action !== undefined)
+            url_ += "Action=" + encodeURIComponent("" + action) + "&";
+        if (userId === null)
+            throw new globalThis.Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "UserId=" + encodeURIComponent("" + userId) + "&";
+        if (fromUtc === null)
+            throw new globalThis.Error("The parameter 'fromUtc' cannot be null.");
+        else if (fromUtc !== undefined)
+            url_ += "FromUtc=" + encodeURIComponent("" + fromUtc) + "&";
+        if (toUtc === null)
+            throw new globalThis.Error("The parameter 'toUtc' cannot be null.");
+        else if (toUtc !== undefined)
+            url_ += "ToUtc=" + encodeURIComponent("" + toUtc) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAuditReport(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAuditReport(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AuditReportResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AuditReportResponse>;
+        }));
+    }
+
+    protected processGetAuditReport(response: HttpResponseBase): Observable<AuditReportResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuditReportResponse;
+            return _observableOf(result200);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2305,6 +2389,11 @@ export class UsersClient implements IUsersClient {
     }
 }
 
+export interface AuditActionSummaryResponse {
+    action?: string | undefined;
+    count?: number;
+}
+
 export interface AuditLogResponse {
     id?: number;
     tableName?: string | undefined;
@@ -2327,6 +2416,25 @@ export interface AuditLogResponsePagedResponse {
     totalPages?: number;
     readonly hasNextPage?: boolean;
     readonly hasPreviousPage?: boolean;
+}
+
+export interface AuditReportResponse {
+    totalAuditLogs?: number;
+    generatedAtUtc?: string;
+    byAction?: AuditActionSummaryResponse[] | undefined;
+    byTable?: AuditTableSummaryResponse[] | undefined;
+    byUser?: AuditUserSummaryResponse[] | undefined;
+}
+
+export interface AuditTableSummaryResponse {
+    tableName?: string | undefined;
+    count?: number;
+}
+
+export interface AuditUserSummaryResponse {
+    userId?: string | undefined;
+    userName?: string | undefined;
+    count?: number;
 }
 
 export interface AuthResponse {

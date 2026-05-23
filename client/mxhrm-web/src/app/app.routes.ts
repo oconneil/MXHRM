@@ -107,6 +107,16 @@ export const routes: Routes = [
         data: {
           permission: Permissions.Employee.Read
         }
+      },
+      {
+        path: 'reports/audit',
+        loadComponent: () =>
+          import('./features/reports/pages/audit-report/audit-report')
+            .then(m => m.AuditReport),
+        canActivate: [permissionGuard],
+        data: {
+          permission: Permissions.Audit.Read
+        }
       }
     ]
   },

@@ -51,4 +51,17 @@ public sealed class ReportsController : ControllerBase
             file.ContentType,
             file.FileName);
     }
+    
+    [HttpGet("audit")]
+    [Authorize(Policy = Permissions.Audit.Read)]
+    public async Task<ActionResult<AuditReportResponse>> GetAuditReport(
+    [FromQuery] AuditReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var report = await _reportService.GetAuditReportAsync(
+            request,
+            cancellationToken);
+
+        return Ok(report);
+    }
 }

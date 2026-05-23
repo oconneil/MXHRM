@@ -17,6 +17,8 @@ public sealed class FileResponseOperationFilter : IOperationFilter
             return;
         }
 
+        operation.Responses ??= new OpenApiResponses();
+
         operation.Responses["200"] = new OpenApiResponse
         {
             Description = "File",

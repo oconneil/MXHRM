@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EmployeeSummaryReportRequest } from '../models/report';
 import {
+    AuditReportRequest,
+    EmployeeSummaryReportRequest
+} from '../models/report';
+import {
+    AuditReportResponse,
     EmployeeSummaryReportResponse,
     FileResponse,
     ReportsClient
@@ -32,6 +36,18 @@ export class ReportService {
             request.isActive ?? undefined,
             request.hireDateFrom || undefined,
             request.hireDateTo || undefined
+        );
+    }
+
+    getAuditReport(
+        request: AuditReportRequest = {}
+    ): Observable<AuditReportResponse> {
+        return this.reportsClient.getAuditReport(
+            request.tableName?.trim() || undefined,
+            request.action?.trim() || undefined,
+            request.userId?.trim() || undefined,
+            request.fromUtc || undefined,
+            request.toUtc || undefined
         );
     }
 }

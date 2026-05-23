@@ -166,4 +166,80 @@ public sealed class ReportService : IReportService
             FileName = $"employee-summary-report-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx"
         };
     }
+
+    public async Task<AuditReportResponse> GetAuditReportAsync(
+    AuditReportRequest request,
+    CancellationToken cancellationToken)
+    {
+        var query = _db.AuditLogs
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.TableName))
+        {
+            query = query.Where(x => x.TableName == request.TableName.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Action))
+        {
+            query = query.Where(x => x.Action == request.Action.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.UserId))
+        {
+            query = query.Where(x => x.UserId == request.UserId.Trim());
+        }
+
+        if (request.FromUtc.HasValue)
+        {
+            query = query.Where(x => x.CreatedAtUtc >= request.FromUtc.Value);
+        }
+
+        if (request.ToUtc.HasValue)
+        {
+            query = query.Where(x => x.CreatedAtUtc <= request.ToUtc.Value);
+        }
+
+        var totalAuditLogs = await query.CountAsync(cancellationToken);
+
+        var byAction = await query
+            .GroupBy(x => x.Action)
+            .Select(g => new AuditActionSummaryResponse
+            {
+                Action = g.Key,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        var byTable = await query
+            .GroupBy(x => x.TableName)
+            .Select(g => new AuditTableSummaryResponse
+            {
+                TableName = g.Key,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        var byUser = await query
+            .GroupBy(x => new { x.UserId, x.UserName })
+            .Select(g => new AuditUserSummaryResponse
+            {
+                UserId = g.Key.UserId,
+                UserName = g.Key.UserName,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return new AuditReportResponse
+        {
+            TotalAuditLogs = totalAuditLogs,
+            GeneratedAtUtc = DateTime.UtcNow,
+            ByAction = byAction,
+            ByTable = byTable,
+            ByUser = byUser
+        };
+    }
 }

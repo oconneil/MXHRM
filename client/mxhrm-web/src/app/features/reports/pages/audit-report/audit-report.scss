@@ -1,0 +1,50 @@
+:host {
+    display: block;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.summary-card {
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    border: 1px solid #e5e7eb;
+}
+
+.summary-card span {
+    display: block;
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.35rem;
+}
+
+.summary-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.summary-card.total {
+    background: linear-gradient(135deg, #ecfeff, #e0f2fe);
+}
+
+.report-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.report-grid-wide {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 992px) {
+    .report-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}

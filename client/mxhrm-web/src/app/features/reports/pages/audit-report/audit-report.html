@@ -1,0 +1,132 @@
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">Audit Report</h1>
+        <p class="text-muted mb-0">
+            Review audit activity summary by action, table, and user.
+        </p>
+    </div>
+
+    <div>
+        <button kendoButton type="button" fillMode="outline" (click)="loadReport()">
+            Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Table Name</label>
+                <input class="form-control" type="text" placeholder="Employees" [ngModel]="tableName()"
+                    (ngModelChange)="tableName.set($event)" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Action</label>
+                <select class="form-select" [ngModel]="action()" (ngModelChange)="action.set($event)">
+                    <option value="">All</option>
+                    <option value="Insert">Insert</option>
+                    <option value="Update">Update</option>
+                    <option value="Delete">Delete</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">User ID</label>
+                <input class="form-control" type="text" placeholder="User ID" [ngModel]="userId()"
+                    (ngModelChange)="userId.set($event)" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">From UTC</label>
+                <input class="form-control" type="datetime-local" [ngModel]="fromUtc()"
+                    (ngModelChange)="fromUtc.set($event)" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">To UTC</label>
+                <input class="form-control" type="datetime-local" [ngModel]="toUtc()"
+                    (ngModelChange)="toUtc.set($event)" />
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button kendoButton themeColor="primary" type="button" (click)="loadReport()">
+                    Apply Filters
+                </button>
+
+                <button kendoButton fillMode="outline" type="button" (click)="clearFilters()">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (errorMessage()) {
+<div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (loading()) {
+<div class="alert alert-info">Loading audit report...</div>
+}
+
+@if (report(); as summary) {
+<div class="summary-grid mb-3">
+    <section class="summary-card total">
+        <span>Total Audit Logs</span>
+        <strong>{{ summary.totalAuditLogs | number }}</strong>
+    </section>
+</div>
+
+<p class="text-muted small mb-3">
+    Generated at: {{ summary.generatedAtUtc | date: 'yyyy-MM-dd HH:mm:ss' }}
+</p>
+
+<div class="report-grid-layout">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">By Action</h2>
+
+            <kendo-grid [data]="byAction()" [height]="320">
+                <kendo-grid-column field="action" title="Action">
+                </kendo-grid-column>
+
+                <kendo-grid-column field="count" title="Count" [width]="130">
+                </kendo-grid-column>
+            </kendo-grid>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">By Table</h2>
+
+            <kendo-grid [data]="byTable()" [height]="320">
+                <kendo-grid-column field="tableName" title="Table Name">
+                </kendo-grid-column>
+
+                <kendo-grid-column field="count" title="Count" [width]="130">
+                </kendo-grid-column>
+            </kendo-grid>
+        </div>
+    </div>
+
+    <div class="card report-grid-wide">
+        <div class="card-body">
+            <h2 class="h5 mb-3">By User</h2>
+
+            <kendo-grid [data]="byUser()" [height]="360">
+                <kendo-grid-column field="userName" title="User Name" [width]="180">
+                </kendo-grid-column>
+
+                <kendo-grid-column field="userId" title="User ID">
+                </kendo-grid-column>
+
+                <kendo-grid-column field="count" title="Count" [width]="130">
+                </kendo-grid-column>
+            </kendo-grid>
+        </div>
+    </div>
+</div>
+}
