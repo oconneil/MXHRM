@@ -6,6 +6,7 @@ using MXHRM.Infrastructure.Authorization;
 using MXHRM.Infrastructure.Identity;
 using MXHRM.Infrastructure.Auditing;
 using MXHRM.Domain.Reports;
+using MXHRM.Domain.Notifications;
 
 namespace MXHRM.Infrastructure.Data;
 
@@ -23,6 +24,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
     public DbSet<GeneratedReport> GeneratedReports => Set<GeneratedReport>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -263,6 +265,59 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => x.ReportType);
 
             entity.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<UserNotification>(entity =>
+        {
+            entity.ToTable("UserNotifications");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.UserId)
+                .HasMaxLength(450)
+                .IsRequired();
+
+            entity.Property(x => x.Type)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Key)
+                .HasMaxLength(200);
+
+            entity.Property(x => x.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Message)
+                .HasMaxLength(1000)
+                .IsRequired();
+
+            entity.Property(x => x.Tone)
+                .HasMaxLength(20)
+                .IsRequired();
+
+            entity.Property(x => x.DataJson)
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(x => x.Route)
+                .HasMaxLength(300);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .IsRequired();
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .IsRequired();
+
+            entity.HasIndex(x => new { x.UserId, x.UpdatedAtUtc })
+                .HasDatabaseName("IX_UserNotifications_UserId_UpdatedAtUtc");
+
+            entity.HasIndex(x => new { x.UserId, x.IsRead, x.UpdatedAtUtc })
+                .HasDatabaseName("IX_UserNotifications_UserId_IsRead_UpdatedAtUtc");
+
+            entity.HasIndex(x => new { x.UserId, x.Key })
+                .IsUnique()
+                .HasFilter("[Key] IS NOT NULL")
+                .HasDatabaseName("UX_UserNotifications_UserId_Key");
         });
 
     }
