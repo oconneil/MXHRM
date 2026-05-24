@@ -64,7 +64,6 @@ export class GeneratedReports implements OnInit {
   }
 
   ngOnInit(): void {
-    this.realtimeService.start();
     this.loadReports();
   }
 

@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth';
 import { RealtimeMessage } from './realtime-message';
+import { NotificationService } from '../notifications/notification-service';
 
 @Injectable({
     providedIn: 'root'
@@ -13,7 +14,10 @@ export class RealtimeService {
 
     private connection?: signalR.HubConnection;
 
-    constructor(private readonly authService: AuthService) { }
+    constructor(
+        private readonly authService: AuthService,
+        private readonly notificationService: NotificationService
+    ) { }
 
     start(): void {
         if (this.connection) {
@@ -27,8 +31,9 @@ export class RealtimeService {
             .withAutomaticReconnect()
             .build();
 
-        this.connection.on('realtimeMessage', message => {
+        this.connection.on('realtimeMessage', (message: RealtimeMessage) => {
             this.latestMessage.set(message);
+            this.notificationService.addFromRealtimeMessage(message);
         });
 
         this.connection.onreconnected(() => {

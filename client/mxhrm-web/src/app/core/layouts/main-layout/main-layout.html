@@ -1,61 +1,146 @@
 <div class="shell">
   <kendo-appbar position="top" positionMode="sticky" themeColor="light" class="shell-appbar">
     <kendo-appbar-section>
-      <button
-        kendoButton
-        type="button"
-        fillMode="flat"
-        [svgIcon]="menuIcon"
-        aria-label="Toggle navigation"
-        (click)="toggleDrawer()">
-      </button>
+      <button kendoButton class="navigation-toggle" type="button" fillMode="flat" [svgIcon]="menuIcon"
+        aria-label="Toggle navigation" (click)="toggleDrawer()"></button>
     </kendo-appbar-section>
 
     <kendo-appbar-section>
       <div class="brand">
         <span class="brand-mark">MX</span>
-        <span class="brand-name">MXHRM</span>
+        <span class="brand-copy">
+          <span class="brand-name">MXHRM</span>
+          <span class="brand-caption">People Operations</span>
+        </span>
       </div>
     </kendo-appbar-section>
 
     <kendo-appbar-spacer />
 
+    <kendo-appbar-section>
+      <div class="connection-status" [class.connected]="realtimeConnected()"
+        [class.reconnecting]="!realtimeConnected()">
+        <span class="connection-dot"></span>
+        <span>{{ realtimeConnected() ? 'Live updates' : 'Reconnecting' }}</span>
+      </div>
+    </kendo-appbar-section>
+
+    <kendo-appbar-section>
+      <div class="notification-trigger">
+        <button #notificationAnchor kendoButton class="notification-button" [class.active]="notificationPanelOpen()"
+          type="button" fillMode="flat" [svgIcon]="bellIcon" aria-label="Open notifications"
+          aria-controls="notification-panel" [attr.aria-expanded]="notificationPanelOpen()"
+          (click)="toggleNotifications()"></button>
+
+        @if (notificationService.unreadCount() > 0) {
+        <span class="notification-badge" aria-label="Unread notifications">
+          {{ notificationService.unreadCount() > 99 ? '99+' : notificationService.unreadCount() }}
+        </span>
+        }
+      </div>
+
+      @if (notificationPanelOpen()) {
+      <kendo-popup [anchor]="notificationAnchor" [anchorAlign]="notificationAnchorAlign"
+        [popupAlign]="notificationPopupAlign" [collision]="notificationCollision" [margin]="notificationMargin"
+        [animate]="true" (anchorViewportLeave)="closeNotifications()">
+        <section id="notification-panel" class="notification-panel" aria-label="Notifications">
+          <header class="notification-panel-header">
+            <div>
+              <p class="notification-overline">Activity stream</p>
+              <h2 class="notification-panel-title">Notifications</h2>
+              <p class="notification-panel-subtitle">
+                {{ notificationService.unreadCount() }} unread update{{
+                notificationService.unreadCount() === 1 ? '' : 's'
+                }}
+              </p>
+            </div>
+
+            @if (notificationService.unreadCount() > 0) {
+            <button kendoButton class="mark-read-button" type="button" size="small" fillMode="flat"
+              [svgIcon]="checkIcon" (click)="markAllNotificationsAsRead()">
+              Read all
+            </button>
+            }
+          </header>
+
+          @if (notificationService.notifications().length === 0) {
+          <div class="notification-empty">
+            <div class="notification-empty-icon">
+              <kendo-svg-icon [icon]="bellIcon" />
+            </div>
+            <p class="notification-empty-title">Your inbox is quiet</p>
+            <p class="notification-empty-text">
+              Completed reports and live workspace events will appear here.
+            </p>
+          </div>
+          } @else {
+          <div class="notification-list">
+            @for (notification of notificationService.notifications(); track notification.id) {
+            <button type="button" class="notification-item" [class.unread]="!notification.isRead"
+              [class.tone-info]="notification.tone === 'info'" [class.tone-success]="notification.tone === 'success'"
+              [class.tone-warning]="notification.tone === 'warning'"
+              [class.tone-danger]="notification.tone === 'danger'" (click)="openNotification(notification)">
+
+              <span class="notification-item-icon">
+                <kendo-svg-icon [icon]="fileReportIcon" />
+              </span>
+
+              <span class="notification-item-content">
+                <span class="notification-item-heading">
+                  <span class="notification-item-title">{{ notification.title }}</span>
+                  @if (!notification.isRead) {
+                  <span class="notification-item-dot" aria-label="Unread"></span>
+                  }
+                </span>
+                <span class="notification-item-message">{{ notification.message }}</span>
+                <span class="notification-item-time">
+                  {{ notification.createdAtUtc | date: 'dd MMM, HH:mm' }}
+                </span>
+              </span>
+            </button>
+            }
+          </div>
+          }
+
+          @if (notificationService.notifications().length > 0) {
+          <footer class="notification-panel-footer">
+            <span>{{ notificationService.notifications().length }} recent events</span>
+          </footer>
+          }
+        </section>
+      </kendo-popup>
+      }
+    </kendo-appbar-section>
+
     @if (authService.currentUser(); as user) {
     <kendo-appbar-section>
       <div class="user-summary">
-        <kendo-svg-icon [icon]="userIcon" />
-        <span>{{ user.displayName }}</span>
+        <span class="user-avatar">{{ user.displayName.charAt(0) }}</span>
+        <span class="user-copy">
+          <span class="user-name">{{ user.displayName }}</span>
+          <span class="user-role">{{ primaryRole() }}</span>
+        </span>
       </div>
     </kendo-appbar-section>
     }
 
     <kendo-appbar-section>
-      <button
-        kendoButton
-        type="button"
-        fillMode="outline"
-        themeColor="base"
-        [svgIcon]="logoutIcon"
-        (click)="logout()">
+      <button kendoButton class="logout-button" type="button" fillMode="outline" themeColor="base"
+        [svgIcon]="logoutIcon" (click)="logout()">
         Logout
       </button>
     </kendo-appbar-section>
   </kendo-appbar>
 
   <kendo-drawer-container class="shell-body">
-    <kendo-drawer
-      mode="push"
-      [mini]="true"
-      [width]="260"
-      [miniWidth]="64"
-      [expanded]="expanded()"
-      [items]="drawerItems()"
-      [autoCollapse]="false"
-      (select)="onDrawerSelect($event)">
+    <kendo-drawer mode="push" [mini]="true" [width]="268" [miniWidth]="68" [expanded]="expanded()"
+      [items]="drawerItems()" [autoCollapse]="false" (select)="onDrawerSelect($event)">
       <ng-template kendoDrawerItemTemplate let-item>
         <div class="drawer-item">
           @if (item.svgIcon) {
-          <kendo-svg-icon [icon]="item.svgIcon" />
+          <span class="drawer-icon">
+            <kendo-svg-icon [icon]="item.svgIcon" />
+          </span>
           }
           <span class="drawer-item-text">{{ item.text }}</span>
         </div>
@@ -63,11 +148,43 @@
     </kendo-drawer>
 
     <kendo-drawer-content>
-      <app-global-error-alert />
+      <div class="shell-canvas">
+        <div class="canvas-glow" aria-hidden="true"></div>
 
-      <main class="shell-content">
-        <router-outlet />
-      </main>
+        @if (realtimeToast(); as toast) {
+        <div class="toast-container position-fixed bottom-0 end-0 p-3 notification-toast-layer">
+          <section class="toast show realtime-toast" [class.tone-info]="toast.tone === 'info'"
+            [class.tone-success]="toast.tone === 'success'" [class.tone-warning]="toast.tone === 'warning'"
+            [class.tone-danger]="toast.tone === 'danger'" role="status" aria-live="polite" aria-atomic="true">
+
+            <span class="realtime-toast-accent"></span>
+
+            <button type="button" class="realtime-toast-content" (click)="openToastNotification()">
+
+              <span class="realtime-toast-icon">
+                <kendo-svg-icon [icon]="fileReportIcon" />
+              </span>
+
+              <span class="realtime-toast-copy">
+                <span class="realtime-toast-label">Realtime update</span>
+                <span class="realtime-toast-title">{{ toast.title }}</span>
+                <span class="realtime-toast-message">{{ toast.message }}</span>
+              </span>
+            </button>
+
+            <button kendoButton class="realtime-toast-close" type="button" fillMode="flat" size="small"
+              [svgIcon]="xIcon" aria-label="Dismiss notification" (click)="dismissRealtimeToast()">
+            </button>
+          </section>
+        </div>
+        }
+
+        <app-global-error-alert />
+
+        <main class="shell-content">
+          <router-outlet />
+        </main>
+      </div>
     </kendo-drawer-content>
   </kendo-drawer-container>
 </div>
