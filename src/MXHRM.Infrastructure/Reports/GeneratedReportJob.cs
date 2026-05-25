@@ -7,25 +7,31 @@ using MXHRM.Application.Reports.Exports;
 using MXHRM.Domain.Reports;
 using MXHRM.Infrastructure.Data;
 using MXHRM.Application.Common.Realtime;
+using MXHRM.Application.Notifications;
+using MXHRM.Application.Notifications.DTOs;
 
 namespace MXHRM.Infrastructure.Reports;
 
 public sealed class GeneratedReportJob
 {
+    private static readonly JsonSerializerOptions NotificationJsonOptions = new(JsonSerializerDefaults.Web);
     private readonly AppDbContext _db;
     private readonly IReportService _reportService;
     private readonly ILogger<GeneratedReportJob> _logger;
     private readonly IRealtimeNotifier _realtimeNotifier;
+    private readonly IUserNotificationService _notificationService;
 
     public GeneratedReportJob(
     AppDbContext db,
     IReportService reportService,
     IRealtimeNotifier realtimeNotifier,
+    IUserNotificationService notificationService,
     ILogger<GeneratedReportJob> logger)
     {
         _db = db;
         _reportService = reportService;
         _realtimeNotifier = realtimeNotifier;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -80,6 +86,10 @@ public sealed class GeneratedReportJob
                 "Generated report {GeneratedReportId} completed.",
                 generatedReportId);
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             generatedReport.Status = ReportStatuses.Failed;
@@ -88,7 +98,6 @@ public sealed class GeneratedReportJob
 
             await _db.SaveChangesAsync(cancellationToken);
 
-            // Notify client about status update
             await NotifyAsync(generatedReport, cancellationToken);
 
             _logger.LogError(
@@ -139,16 +148,92 @@ public sealed class GeneratedReportJob
             return;
         }
 
-        await _realtimeNotifier.SendToUserAsync(
-            generatedReport.RequestedByUserId,
-            new RealtimeMessage
-            {
-                Type = "generated-report.updated",
-                Title = "Generated report updated",
-                Message = $"Report status is {generatedReport.Status}.",
-                Data = MapToResponse(generatedReport)
-            },
-            cancellationToken);
+        var reportResponse = MapToResponse(generatedReport);
+        var content = GetNotificationContent(generatedReport.Status);
+
+        UserNotificationResponse notification;
+
+        try
+        {
+            notification = await _notificationService.CreateOrUpdateAsync(
+                new CreateUserNotificationRequest
+                {
+                    UserId = generatedReport.RequestedByUserId,
+                    Type = "generated-report.updated",
+                    Key = $"generated-report:{generatedReport.Id}",
+                    Title = content.Title,
+                    Message = content.Message,
+                    Tone = content.Tone,
+                    DataJson = JsonSerializer.Serialize(
+                        reportResponse,
+                        NotificationJsonOptions),
+                    Route = "/reports/generated"
+                },
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to persist notification for generated report {GeneratedReportId}.",
+                generatedReport.Id);
+
+            return;
+        }
+
+        try
+        {
+            await _realtimeNotifier.SendToUserAsync(
+                generatedReport.RequestedByUserId,
+                new RealtimeMessage
+                {
+                    NotificationId = notification.Id,
+                    Key = notification.Key,
+                    Type = notification.Type,
+                    Title = notification.Title,
+                    Message = notification.Message,
+                    Tone = notification.Tone,
+                    Route = notification.Route,
+                    Data = reportResponse,
+                    CreatedAtUtc = notification.UpdatedAtUtc
+                },
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                ex,
+                "Notification {NotificationId} for generated report {GeneratedReportId} was persisted, but realtime delivery failed.",
+                notification.Id,
+                generatedReport.Id);
+        }
+    }
+
+    private static (string Title, string Message, string Tone) GetNotificationContent(
+    string status)
+    {
+        return status switch
+        {
+            ReportStatuses.Processing => (
+                "Report is being generated",
+                "Your report is currently being generated.",
+                "info"),
+
+            ReportStatuses.Completed => (
+                "Report is ready",
+                "Your generated report is ready to download.",
+                "success"),
+
+            ReportStatuses.Failed => (
+                "Report generation failed",
+                "Your report could not be generated. Please try again.",
+                "danger"),
+
+            _ => (
+                "Report updated",
+                $"Report status is {status}.",
+                "info")
+        };
     }
 
     private static GeneratedReportResponse MapToResponse(

@@ -24,6 +24,8 @@ using MXHRM.Application.Auditing;
 using MXHRM.Infrastructure.Auditing;
 using MXHRM.Application.Reports;
 using MXHRM.Infrastructure.Reports;
+using MXHRM.Application.Notifications;
+using MXHRM.Infrastructure.Notifications;
 
 namespace MXHRM.Infrastructure;
 
@@ -103,6 +105,7 @@ public static class DependencyInjection
         services.AddScoped<IUserActivityLogService, UserActivityLogService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IAsyncReportService, AsyncReportService>();
+        services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<GeneratedReportJob>();
 
         return services;

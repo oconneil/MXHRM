@@ -16,8 +16,10 @@ import { DrawerItem, DrawerSelectEvent, KENDO_DRAWER } from '@progress/kendo-ang
 import { KENDO_APPBAR } from '@progress/kendo-angular-navigation';
 import { Align, Collision, KENDO_POPUP, Margin } from '@progress/kendo-angular-popup';
 import {
+  arrowRotateCwIcon,
   bellIcon,
   checkIcon,
+  exclamationCircleIcon,
   fileReportIcon,
   folderIcon,
   gearIcon,
@@ -67,11 +69,15 @@ export class MainLayout implements OnInit, OnDestroy {
   protected readonly checkIcon = checkIcon;
   protected readonly fileReportIcon = fileReportIcon;
   protected readonly xIcon = xIcon;
+  protected readonly refreshIcon = arrowRotateCwIcon;
+  protected readonly errorIcon = exclamationCircleIcon;
 
   protected readonly expanded = signal(true);
   protected readonly notificationPanelOpen = signal(false);
   protected readonly realtimeToast = signal<NotificationItem | null>(null);
   protected readonly currentUrl = signal(this.router.url);
+
+  protected readonly notificationSkeletonRows = [1, 2, 3];
 
   private toastTimeout?: ReturnType<typeof setTimeout>;
 
@@ -164,6 +170,7 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.notificationService.load();
     this.realtimeService.start();
   }
 
@@ -211,6 +218,10 @@ export class MainLayout implements OnInit, OnDestroy {
 
   protected closeNotifications(): void {
     this.notificationPanelOpen.set(false);
+  }
+  
+  protected refreshNotifications(): void {
+    this.notificationService.load();
   }
 
   protected dismissRealtimeToast(): void {

@@ -1,7 +1,7 @@
 export type NotificationTone = 'info' | 'success' | 'warning' | 'danger';
 
 export interface NotificationItem<TData = unknown> {
-    id: string;
+    id: number;
     key?: string;
     type: string;
     title: string;
