@@ -503,7 +503,7 @@ export interface IEmployeesClient {
     getAll(search?: string | undefined, companyID?: string | undefined, isActive?: boolean | undefined, sortBy?: string | undefined, sortDirection?: string | undefined, page?: number | undefined, pageSize?: number | undefined): Observable<EmployeeResponsePagedResponse>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return Created
      */
     create(body?: CreateEmployeeRequest | undefined): Observable<EmployeeResponse>;
     /**
@@ -512,17 +512,17 @@ export interface IEmployeesClient {
     getById(companyId: string, employeeId: string): Observable<EmployeeResponse>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     update(companyId: string, employeeId: string, body?: UpdateEmployeeRequest | undefined): Observable<void>;
     /**
-     * @return OK
+     * @return No Content
      */
     delete(companyId: string, employeeId: string): Observable<void>;
     /**
      * @return OK
      */
-    grid(): Observable<void>;
+    grid(): Observable<EmployeeResponseGridDataSourceResult>;
     /**
      * @return OK
      */
@@ -629,7 +629,7 @@ export class EmployeesClient implements IEmployeesClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return Created
      */
     create(body?: CreateEmployeeRequest | undefined): Observable<EmployeeResponse> {
         let url_ = this.baseUrl + "/api/Employees";
@@ -668,11 +668,17 @@ export class EmployeesClient implements IEmployeesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EmployeeResponse;
-            return _observableOf(result200);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EmployeeResponse;
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -730,6 +736,12 @@ export class EmployeesClient implements IEmployeesClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EmployeeResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -740,7 +752,7 @@ export class EmployeesClient implements IEmployeesClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     update(companyId: string, employeeId: string, body?: UpdateEmployeeRequest | undefined): Observable<void> {
         let url_ = this.baseUrl + "/api/Employees/{companyId}/{employeeId}";
@@ -784,9 +796,21 @@ export class EmployeesClient implements IEmployeesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
+        } else if (status === 409) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Conflict", status, _responseText, _headers, result409);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -797,7 +821,7 @@ export class EmployeesClient implements IEmployeesClient {
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
     delete(companyId: string, employeeId: string): Observable<void> {
         let url_ = this.baseUrl + "/api/Employees/{companyId}/{employeeId}";
@@ -837,9 +861,15 @@ export class EmployeesClient implements IEmployeesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -852,7 +882,7 @@ export class EmployeesClient implements IEmployeesClient {
     /**
      * @return OK
      */
-    grid(): Observable<void> {
+    grid(): Observable<EmployeeResponseGridDataSourceResult> {
         let url_ = this.baseUrl + "/api/Employees/grid";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -860,6 +890,7 @@ export class EmployeesClient implements IEmployeesClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -870,14 +901,14 @@ export class EmployeesClient implements IEmployeesClient {
                 try {
                     return this.processGrid(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<EmployeeResponseGridDataSourceResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<EmployeeResponseGridDataSourceResult>;
         }));
     }
 
-    protected processGrid(response: HttpResponseBase): Observable<void> {
+    protected processGrid(response: HttpResponseBase): Observable<EmployeeResponseGridDataSourceResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -886,7 +917,9 @@ export class EmployeesClient implements IEmployeesClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EmployeeResponseGridDataSourceResult;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2109,7 +2142,7 @@ export interface IRolesClient {
     getAll(): Observable<RoleResponse[]>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return Created
      */
     create(body?: CreateRoleRequest | undefined): Observable<RoleResponse>;
     /**
@@ -2118,11 +2151,11 @@ export interface IRolesClient {
     getById(id: string): Observable<RoleResponse>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     update(id: string, body?: UpdateRoleRequest | undefined): Observable<void>;
     /**
-     * @return OK
+     * @return No Content
      */
     delete(id: string): Observable<void>;
     /**
@@ -2131,7 +2164,7 @@ export interface IRolesClient {
     getPermissions(id: string): Observable<RolePermissionResponse>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     updatePermissions(id: string, body?: UpdateRolePermissionsRequest | undefined): Observable<void>;
 }
@@ -2201,7 +2234,7 @@ export class RolesClient implements IRolesClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return Created
      */
     create(body?: CreateRoleRequest | undefined): Observable<RoleResponse> {
         let url_ = this.baseUrl + "/api/Roles";
@@ -2240,11 +2273,17 @@ export class RolesClient implements IRolesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoleResponse;
-            return _observableOf(result200);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoleResponse;
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2299,6 +2338,12 @@ export class RolesClient implements IRolesClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoleResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2309,7 +2354,7 @@ export class RolesClient implements IRolesClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     update(id: string, body?: UpdateRoleRequest | undefined): Observable<void> {
         let url_ = this.baseUrl + "/api/Roles/{id}";
@@ -2350,9 +2395,21 @@ export class RolesClient implements IRolesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2363,7 +2420,7 @@ export class RolesClient implements IRolesClient {
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
     delete(id: string): Observable<void> {
         let url_ = this.baseUrl + "/api/Roles/{id}";
@@ -2400,9 +2457,21 @@ export class RolesClient implements IRolesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2457,6 +2526,12 @@ export class RolesClient implements IRolesClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RolePermissionResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2467,7 +2542,7 @@ export class RolesClient implements IRolesClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     updatePermissions(id: string, body?: UpdateRolePermissionsRequest | undefined): Observable<void> {
         let url_ = this.baseUrl + "/api/Roles/{id}/permissions";
@@ -2508,9 +2583,21 @@ export class RolesClient implements IRolesClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3197,6 +3284,11 @@ export interface EmployeeResponse {
     rowVersion?: string | undefined;
 }
 
+export interface EmployeeResponseGridDataSourceResult {
+    data?: EmployeeResponse[] | undefined;
+    total?: number;
+}
+
 export interface EmployeeResponsePagedResponse {
     items?: EmployeeResponse[] | undefined;
     page?: number;
@@ -3231,6 +3323,14 @@ export interface EmployeeSummaryReportResponse {
     totalSalary?: number;
     generatedAtUtc?: string;
     byCompany?: EmployeeSummaryByCompanyResponse[] | undefined;
+}
+
+export interface ErrorResponse {
+    statusCode?: number;
+    code?: string | undefined;
+    message?: string | undefined;
+    details?: any | undefined;
+    traceId?: string | undefined;
 }
 
 export interface GeneratedReportResponse {

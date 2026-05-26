@@ -17,6 +17,21 @@ export class ErrorService {
             return error;
         }
 
+        if (this.isSwaggerException(error)) {
+            const apiError = this.parseApiErrorResponse(error.response);
+
+            if (apiError) {
+                return apiError;
+            }
+
+            return {
+                statusCode: error.status,
+                code: this.getCodeByStatus(error.status),
+                message: error.message || 'Request failed.',
+                details: error.response,
+            };
+        }
+
         if (error instanceof HttpErrorResponse) {
             const body = error.error;
 
@@ -103,7 +118,7 @@ export class ErrorService {
                 return ErrorCodes.InternalServerError;
         }
     }
-    
+
     getValidationErrors(error: ApiError): ValidationErrors {
         if (error.code !== ErrorCodes.ValidationError) {
             return {};
@@ -132,6 +147,40 @@ export class ErrorService {
         }
 
         return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    private isSwaggerException(
+        value: unknown
+    ): value is { status: number; response: string; message: string } {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+
+        const candidate = value as {
+            status?: unknown;
+            response?: unknown;
+            message?: unknown;
+        };
+
+        return (
+            typeof candidate.status === 'number' &&
+            typeof candidate.response === 'string' &&
+            typeof candidate.message === 'string'
+        );
+    }
+
+    private parseApiErrorResponse(response: string): ApiError | null {
+        if (!response) {
+            return null;
+        }
+
+        try {
+            const parsed: unknown = JSON.parse(response);
+
+            return this.isApiError(parsed) ? parsed : null;
+        } catch {
+            return null;
+        }
     }
 
 }

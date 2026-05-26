@@ -10,6 +10,8 @@ using MXHRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using MXHRM.Api.Common.Grid;
 using MXHRM.Infrastructure.Common.Grid;
+using MXHRM.Application.Common.Grid;
+using MXHRM.Api.Common;
 
 namespace MXHRM.Api.Controllers;
 
@@ -31,6 +33,7 @@ public class EmployeesController : BaseApiController
 
     [HttpGet]
     [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesResponseType(typeof(PagedResponse<EmployeeResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResponse<EmployeeResponse>>> GetAll(
     [FromQuery] GetEmployeesRequest request)
     {
@@ -40,9 +43,9 @@ public class EmployeesController : BaseApiController
 
     [HttpGet("{companyId}/{employeeId}")]
     [Authorize(Policy = Permissions.Employee.Read)]
-    public async Task<ActionResult<EmployeeResponse>> GetById(
-        string companyId,
-        string employeeId)
+    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EmployeeResponse>> GetById(string companyId, string employeeId)
     {
         var employee = await _employeeService.GetByIdAsync(companyId, employeeId);
 
@@ -54,6 +57,8 @@ public class EmployeesController : BaseApiController
 
     [HttpPost]
     [Authorize(Policy = Permissions.Employee.Create)]
+    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<EmployeeResponse>> Create(CreateEmployeeRequest request)
     {
         var employee = await _employeeService.CreateAsync(request);
@@ -70,10 +75,10 @@ public class EmployeesController : BaseApiController
 
     [HttpPut("{companyId}/{employeeId}")]
     [Authorize(Policy = Permissions.Employee.Update)]
-    public async Task<IActionResult> Update(
-        string companyId,
-        string employeeId,
-        UpdateEmployeeRequest request)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(string companyId, string employeeId, UpdateEmployeeRequest request)
     {
         try
         {
@@ -95,9 +100,9 @@ public class EmployeesController : BaseApiController
 
     [HttpDelete("{companyId}/{employeeId}")]
     [Authorize(Policy = Permissions.Employee.Delete)]
-    public async Task<IActionResult> Delete(
-        string companyId,
-        string employeeId)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(string companyId, string employeeId)
     {
         var deleted = await _employeeService.DeleteAsync(companyId, employeeId);
 
@@ -108,7 +113,12 @@ public class EmployeesController : BaseApiController
     }
 
     [HttpPost("grid")]
-    public async Task<IActionResult> Grid(CancellationToken cancellationToken)
+    [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesResponseType(
+    typeof(GridDataSourceResult<EmployeeResponse>),
+    StatusCodes.Status200OK)]
+    public async Task<ActionResult<GridDataSourceResult<EmployeeResponse>>> Grid(
+    CancellationToken cancellationToken)
     {
         var request = GridDataSourceRequestParser.FromQuery(Request.Query);
 
@@ -127,7 +137,9 @@ public class EmployeesController : BaseApiController
                 IsActive = employee.IsActive
             });
 
-        var result = await query.ToGridDataSourceResultAsync(request, cancellationToken);
+        var result = await query.ToGridDataSourceResultAsync(
+            request,
+            cancellationToken);
 
         return Ok(result);
     }

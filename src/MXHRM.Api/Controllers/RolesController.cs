@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MXHRM.Api.Common;
 using MXHRM.Application.Authorization;
 using MXHRM.Application.Roles;
 using MXHRM.Application.Roles.DTOs;
@@ -12,6 +13,7 @@ namespace MXHRM.Api.Controllers;
 public class RolesController(IRoleService roleService) : BaseApiController
 {
     [HttpGet]
+    [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<RoleResponse>>> GetAll()
     {
         var roles = await roleService.GetAllAsync();
@@ -19,6 +21,8 @@ public class RolesController(IRoleService roleService) : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(RoleResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RoleResponse>> GetById(string id)
     {
         var role = await roleService.GetByIdAsync(id);
@@ -26,6 +30,8 @@ public class RolesController(IRoleService roleService) : BaseApiController
     }
 
     [HttpGet("{id}/permissions")]
+    [ProducesResponseType(typeof(RolePermissionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RolePermissionResponse>> GetPermissions(string id)
     {
         var result = await roleService.GetPermissionsAsync(id);
@@ -33,13 +39,20 @@ public class RolesController(IRoleService roleService) : BaseApiController
     }
 
     [HttpPut("{id}/permissions")]
-    public async Task<IActionResult> UpdatePermissions(string id, UpdateRolePermissionsRequest request)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdatePermissions(
+    string id,
+    UpdateRolePermissionsRequest request)
     {
         var result = await roleService.UpdatePermissionsAsync(id, request);
         return result.Succeeded ? NoContent() : OperationError(result);
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(RoleResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RoleResponse>> Create(CreateRoleRequest request)
     {
         var result = await roleService.CreateAsync(request);
@@ -49,13 +62,21 @@ public class RolesController(IRoleService roleService) : BaseApiController
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, UpdateRoleRequest request)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(
+    string id,
+    UpdateRoleRequest request)
     {
         var result = await roleService.UpdateAsync(id, request);
         return result.Succeeded ? NoContent() : OperationError(result);
     }
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(string id)
     {
         var result = await roleService.DeleteAsync(id);

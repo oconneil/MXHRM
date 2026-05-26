@@ -1,7 +1,14 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { GridDataResult } from '@progress/kendo-angular-grid';
+import { State, toDataSourceRequestString } from '@progress/kendo-data-query';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import {
+  EmployeeResponse as ApiEmployeeResponse,
+  EmployeeResponsePagedResponse as ApiEmployeeResponsePagedResponse,
+  EmployeesClient
+} from '../../../core/api/api-client';
 import {
   CreateEmployeeRequest,
   EmployeeResponse,
@@ -9,51 +16,55 @@ import {
   PagedResponse,
   UpdateEmployeeRequest
 } from '../models/employee';
-import { GridDataResult } from '@progress/kendo-angular-grid';
-import { State, toDataSourceRequestString } from '@progress/kendo-data-query';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EmployeeService {
-  private readonly apiUrl = `${environment.apiBaseUrl}/api/employees`;
+  private readonly apiUrl = `${environment.apiBaseUrl}/api/Employees`;
 
-  constructor(private readonly http: HttpClient) { }
+  constructor(
+    private readonly employeesClient: EmployeesClient,
+    private readonly http: HttpClient
+  ) { }
 
-  getEmployees(request: GetEmployeesRequest): Observable<PagedResponse<EmployeeResponse>> {
-    let params = new HttpParams()
-      .set('page', request.page)
-      .set('pageSize', request.pageSize);
-
-    if (request.search?.trim()) {
-      params = params.set('search', request.search.trim());
-    }
-
-    if (request.companyID?.trim()) {
-      params = params.set('companyID', request.companyID.trim());
-    }
-
-    if (request.isActive !== null && request.isActive !== undefined) {
-      params = params.set('isActive', request.isActive);
-    }
-
-    if (request.sortBy?.trim()) {
-      params = params.set('sortBy', request.sortBy.trim());
-    }
-
-    if (request.sortDirection) {
-      params = params.set('sortDirection', request.sortDirection);
-    }
-
-    return this.http.get<PagedResponse<EmployeeResponse>>(this.apiUrl, { params });
+  getEmployees(
+    request: GetEmployeesRequest
+  ): Observable<PagedResponse<EmployeeResponse>> {
+    return this.employeesClient
+      .getAll(
+        request.search?.trim() || undefined,
+        request.companyID?.trim() || undefined,
+        request.isActive ?? undefined,
+        request.sortBy?.trim() || undefined,
+        request.sortDirection || undefined,
+        request.page,
+        request.pageSize
+      )
+      .pipe(
+        map(response => this.mapPagedResponse(response))
+      );
   }
 
-  createEmployee(request: CreateEmployeeRequest): Observable<EmployeeResponse> {
-    return this.http.post<EmployeeResponse>(this.apiUrl, request);
+  createEmployee(
+    request: CreateEmployeeRequest
+  ): Observable<EmployeeResponse> {
+    return this.employeesClient
+      .create(request)
+      .pipe(
+        map(response => this.mapEmployee(response))
+      );
   }
 
-  getEmployeeById(companyID: string, employeeID: string): Observable<EmployeeResponse> {
-    return this.http.get<EmployeeResponse>(`${this.apiUrl}/${companyID}/${employeeID}`);
+  getEmployeeById(
+    companyID: string,
+    employeeID: string
+  ): Observable<EmployeeResponse> {
+    return this.employeesClient
+      .getById(companyID, employeeID)
+      .pipe(
+        map(response => this.mapEmployee(response))
+      );
   }
 
   updateEmployee(
@@ -61,11 +72,18 @@ export class EmployeeService {
     employeeID: string,
     request: UpdateEmployeeRequest
   ): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${companyID}/${employeeID}`, request);
+    return this.employeesClient.update(
+      companyID,
+      employeeID,
+      request
+    );
   }
 
-  deleteEmployee(companyID: string, employeeID: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${companyID}/${employeeID}`);
+  deleteEmployee(
+    companyID: string,
+    employeeID: string
+  ): Observable<void> {
+    return this.employeesClient.delete(companyID, employeeID);
   }
 
   getEmployeesGrid(state: State): Observable<GridDataResult> {
@@ -75,5 +93,36 @@ export class EmployeeService {
       `${this.apiUrl}/grid?${queryString}`,
       {}
     );
+  }
+
+  private mapPagedResponse(
+    response: ApiEmployeeResponsePagedResponse
+  ): PagedResponse<EmployeeResponse> {
+    return {
+      items: (response.items ?? []).map(item => this.mapEmployee(item)),
+      page: response.page ?? 1,
+      pageSize: response.pageSize ?? 10,
+      totalItems: response.totalItems ?? 0,
+      totalPages: response.totalPages ?? 0,
+      hasNextPage: response.hasNextPage ?? false,
+      hasPreviousPage: response.hasPreviousPage ?? false
+    };
+  }
+
+  private mapEmployee(
+    response: ApiEmployeeResponse
+  ): EmployeeResponse {
+    return {
+      companyID: response.companyID ?? '',
+      employeeID: response.employeeID ?? '',
+      fullName: response.fullName ?? '',
+      firstName: response.firstName ?? '',
+      lastName: response.lastName ?? '',
+      email: response.email ?? '',
+      hireDate: response.hireDate ?? '',
+      salary: response.salary ?? 0,
+      isActive: response.isActive ?? false,
+      rowVersion: response.rowVersion ?? ''
+    };
   }
 }
