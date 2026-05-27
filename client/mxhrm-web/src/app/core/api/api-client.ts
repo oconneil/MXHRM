@@ -33,7 +33,7 @@ export interface IAuditLogsClient {
     /**
      * @return OK
      */
-    grid(): Observable<void>;
+    grid(): Observable<AuditLogResponseGridDataSourceResult>;
 }
 
 @Injectable({
@@ -179,6 +179,12 @@ export class AuditLogsClient implements IAuditLogsClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuditLogResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -190,7 +196,7 @@ export class AuditLogsClient implements IAuditLogsClient {
     /**
      * @return OK
      */
-    grid(): Observable<void> {
+    grid(): Observable<AuditLogResponseGridDataSourceResult> {
         let url_ = this.baseUrl + "/api/audit-logs/grid";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -198,6 +204,7 @@ export class AuditLogsClient implements IAuditLogsClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -208,14 +215,14 @@ export class AuditLogsClient implements IAuditLogsClient {
                 try {
                     return this.processGrid(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<AuditLogResponseGridDataSourceResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<AuditLogResponseGridDataSourceResult>;
         }));
     }
 
-    protected processGrid(response: HttpResponseBase): Observable<void> {
+    protected processGrid(response: HttpResponseBase): Observable<AuditLogResponseGridDataSourceResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -224,7 +231,9 @@ export class AuditLogsClient implements IAuditLogsClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuditLogResponseGridDataSourceResult;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2627,7 +2636,7 @@ export interface IUserActivityLogsClient {
     /**
      * @return OK
      */
-    grid(): Observable<void>;
+    grid(): Observable<UserActivityLogResponseGridDataSourceResult>;
 }
 
 @Injectable({
@@ -2773,6 +2782,12 @@ export class UserActivityLogsClient implements IUserActivityLogsClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserActivityLogResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2784,7 +2799,7 @@ export class UserActivityLogsClient implements IUserActivityLogsClient {
     /**
      * @return OK
      */
-    grid(): Observable<void> {
+    grid(): Observable<UserActivityLogResponseGridDataSourceResult> {
         let url_ = this.baseUrl + "/api/user-activity-logs/grid";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2792,6 +2807,7 @@ export class UserActivityLogsClient implements IUserActivityLogsClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -2802,14 +2818,14 @@ export class UserActivityLogsClient implements IUserActivityLogsClient {
                 try {
                     return this.processGrid(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<UserActivityLogResponseGridDataSourceResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<UserActivityLogResponseGridDataSourceResult>;
         }));
     }
 
-    protected processGrid(response: HttpResponseBase): Observable<void> {
+    protected processGrid(response: HttpResponseBase): Observable<UserActivityLogResponseGridDataSourceResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2818,7 +2834,9 @@ export class UserActivityLogsClient implements IUserActivityLogsClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserActivityLogResponseGridDataSourceResult;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2844,15 +2862,15 @@ export interface IUsersClient {
     getRoles(id: string): Observable<UserRoleResponse>;
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     updateRoles(id: string, body?: UpdateUserRolesRequest | undefined): Observable<void>;
     /**
-     * @return OK
+     * @return No Content
      */
     activate(id: string): Observable<void>;
     /**
-     * @return OK
+     * @return No Content
      */
     deactivate(id: string): Observable<void>;
 }
@@ -2965,6 +2983,12 @@ export class UsersClient implements IUsersClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -3018,6 +3042,12 @@ export class UsersClient implements IUsersClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserRoleResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -3028,7 +3058,7 @@ export class UsersClient implements IUsersClient {
 
     /**
      * @param body (optional) 
-     * @return OK
+     * @return No Content
      */
     updateRoles(id: string, body?: UpdateUserRolesRequest | undefined): Observable<void> {
         let url_ = this.baseUrl + "/api/Users/{id}/roles";
@@ -3069,9 +3099,21 @@ export class UsersClient implements IUsersClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3082,7 +3124,7 @@ export class UsersClient implements IUsersClient {
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
     activate(id: string): Observable<void> {
         let url_ = this.baseUrl + "/api/Users/{id}/activate";
@@ -3119,9 +3161,21 @@ export class UsersClient implements IUsersClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3132,7 +3186,7 @@ export class UsersClient implements IUsersClient {
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
     deactivate(id: string): Observable<void> {
         let url_ = this.baseUrl + "/api/Users/{id}/deactivate";
@@ -3169,9 +3223,21 @@ export class UsersClient implements IUsersClient {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ErrorResponse;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3199,6 +3265,11 @@ export interface AuditLogResponse {
     userName?: string | undefined;
     traceId?: string | undefined;
     createdAtUtc?: string;
+}
+
+export interface AuditLogResponseGridDataSourceResult {
+    data?: AuditLogResponse[] | undefined;
+    total?: number;
 }
 
 export interface AuditLogResponsePagedResponse {
@@ -3439,6 +3510,11 @@ export interface UserActivityLogResponse {
     userAgent?: string | undefined;
     traceId?: string | undefined;
     createdAtUtc?: string;
+}
+
+export interface UserActivityLogResponseGridDataSourceResult {
+    data?: UserActivityLogResponse[] | undefined;
+    total?: number;
 }
 
 export interface UserActivityLogResponsePagedResponse {

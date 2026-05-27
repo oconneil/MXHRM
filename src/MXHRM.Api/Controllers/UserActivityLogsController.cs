@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using MXHRM.Api.Common.Grid;
 using MXHRM.Infrastructure.Common.Grid;
 using MXHRM.Infrastructure.Data;
+using MXHRM.Api.Common;
+using MXHRM.Application.Common.Grid;
 
 namespace MXHRM.Api.Controllers;
 
@@ -28,6 +30,7 @@ public class UserActivityLogsController : BaseApiController
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(PagedResponse<UserActivityLogResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResponse<UserActivityLogResponse>>> GetAll(
         [FromQuery] GetUserActivityLogsRequest request,
         CancellationToken cancellationToken)
@@ -37,6 +40,8 @@ public class UserActivityLogsController : BaseApiController
     }
 
     [HttpGet("{id:long}")]
+    [ProducesResponseType(typeof(UserActivityLogResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserActivityLogResponse>> GetById(
         long id,
         CancellationToken cancellationToken)
@@ -53,6 +58,7 @@ public class UserActivityLogsController : BaseApiController
 
     [HttpPost("grid")]
     [Authorize(Policy = Permissions.Activity.Read)]
+    [ProducesResponseType(typeof(GridDataSourceResult<UserActivityLogResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Grid(CancellationToken cancellationToken)
     {
         var request = GridDataSourceRequestParser.FromQuery(Request.Query);

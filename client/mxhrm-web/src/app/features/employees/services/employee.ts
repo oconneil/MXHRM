@@ -6,6 +6,7 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   EmployeeResponse as ApiEmployeeResponse,
+  EmployeeResponseGridDataSourceResult as ApiEmployeeGridResult,
   EmployeeResponsePagedResponse as ApiEmployeeResponsePagedResponse,
   EmployeesClient
 } from '../../../core/api/api-client';
@@ -89,10 +90,17 @@ export class EmployeeService {
   getEmployeesGrid(state: State): Observable<GridDataResult> {
     const queryString = toDataSourceRequestString(state);
 
-    return this.http.post<GridDataResult>(
-      `${this.apiUrl}/grid?${queryString}`,
-      {}
-    );
+    return this.http
+      .post<ApiEmployeeGridResult>(
+        `${this.apiUrl}/grid?${queryString}`,
+        {}
+      )
+      .pipe(
+        map(response => ({
+          data: (response.data ?? []).map(item => this.mapEmployee(item)),
+          total: response.total ?? 0
+        }))
+      );
   }
 
   private mapPagedResponse(
