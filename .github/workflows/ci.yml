@@ -45,6 +45,14 @@ jobs:
         working-directory: client/mxhrm-web
         run: npm run build
 
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: mxhrm-web-dist
+          path: client/mxhrm-web/dist/mxhrm-web/browser
+          if-no-files-found: error
+          retention-days: 7
+
   docker:
     name: Validate Docker Build
     runs-on: ubuntu-latest
@@ -55,18 +63,22 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Create CI env file
+        env:
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'P@ssw0rd' }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY || 'THIS_IS_CI_SECRET_KEY_CHANGE_ME_1234567890' }}
+          SEQ_ADMIN_PASSWORD: ${{ secrets.SEQ_ADMIN_PASSWORD || 'P@ssw0rd' }}
         run: |
-          cat > .env <<'EOF'
-          MSSQL_SA_PASSWORD=P@ssw0rd
+          cat > .env <<EOF
+          MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
           MXHRM_DB_NAME=MXHRM
 
           JWT_ISSUER=MXHRM.Api
           JWT_AUDIENCE=MXHRM.Web
-          JWT_SECRET_KEY=THIS_IS_CI_SECRET_KEY_CHANGE_ME_1234567890
+          JWT_SECRET_KEY=${JWT_SECRET_KEY}
           JWT_ACCESS_TOKEN_MINUTES=15
 
           SEQ_ADMIN_USERNAME=admin
-          SEQ_ADMIN_PASSWORD=P@ssw0rd
+          SEQ_ADMIN_PASSWORD=${SEQ_ADMIN_PASSWORD}
           EOF
 
       - name: Validate Docker Compose config
