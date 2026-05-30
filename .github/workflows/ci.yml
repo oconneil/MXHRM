@@ -2,7 +2,7 @@ name: MXHRM CI
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  
+
 on:
   push:
     branches:
@@ -73,6 +73,22 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Write build summary
+        run: |
+          {
+            echo "## MXHRM CI Build Summary"
+            echo ""
+            echo "| Check | Status |"
+            echo "|---|---|"
+            echo "| Backend restore | Passed |"
+            echo "| Backend release build | Passed |"
+            echo "| Frontend npm ci | Passed |"
+            echo "| Frontend production build | Passed |"
+            echo "| Frontend artifact | Uploaded |"
+            echo ""
+            echo "Artifact: \`mxhrm-web-dist\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   docker:
     name: Validate Docker Build
     runs-on: ubuntu-latest
@@ -109,3 +125,20 @@ jobs:
 
       - name: Build Web image
         run: docker build -f client/mxhrm-web/Dockerfile -t mxhrm-web:ci .
+
+      - name: Write Docker summary
+        run: |
+          {
+            echo "## MXHRM Docker Validation Summary"
+            echo ""
+            echo "| Check | Status |"
+            echo "|---|---|"
+            echo "| Docker Compose config | Passed |"
+            echo "| API Docker image build | Passed |"
+            echo "| Web Docker image build | Passed |"
+            echo ""
+            echo "Images validated:"
+            echo ""
+            echo "- \`mxhrm-api:ci\`"
+            echo "- \`mxhrm-web:ci\`"
+          } >> "$GITHUB_STEP_SUMMARY"
