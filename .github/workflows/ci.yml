@@ -90,13 +90,24 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   docker:
-    name: Validate Docker Build
+    name: Build and Publish Docker Images
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create CI env file
         env:
@@ -120,25 +131,61 @@ jobs:
       - name: Validate Docker Compose config
         run: docker compose --profile infra --profile app config
 
-      - name: Build API image
-        run: docker build -f src/MXHRM.Api/Dockerfile -t mxhrm-api:ci .
+      - name: Extract API Docker metadata
+        id: meta-api
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/mxhrm-api
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build Web image
-        run: docker build -f client/mxhrm-web/Dockerfile -t mxhrm-web:ci .
+      - name: Extract Web Docker metadata
+        id: meta-web
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/mxhrm-web
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: src/MXHRM.Api/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: client/mxhrm-web/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
 
       - name: Write Docker summary
         run: |
           {
-            echo "## MXHRM Docker Validation Summary"
+            echo "## MXHRM Docker Image Summary"
             echo ""
             echo "| Check | Status |"
             echo "|---|---|"
             echo "| Docker Compose config | Passed |"
             echo "| API Docker image build | Passed |"
             echo "| Web Docker image build | Passed |"
+            echo "| Push images | ${{ github.event_name != 'pull_request' && 'Enabled' || 'Skipped for PR' }} |"
             echo ""
-            echo "Images validated:"
+            echo "API image tags:"
             echo ""
-            echo "- \`mxhrm-api:ci\`"
-            echo "- \`mxhrm-web:ci\`"
+            echo '${{ steps.meta-api.outputs.tags }}'
+            echo ""
+            echo "Web image tags:"
+            echo ""
+            echo '${{ steps.meta-web.outputs.tags }}'
           } >> "$GITHUB_STEP_SUMMARY"
