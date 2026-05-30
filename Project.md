@@ -1,5 +1,8 @@
 # 🚀 MXHRM Full-Stack Learning Project (Summary)
 
+[![MXHRM CI](https://github.com/oconneil/MXHRM/actions/workflows/ci.yml/badge.svg)](https://github.com/oconneil/MXHRM/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/oconneil/MXHRM/actions/workflows/codeql.yml/badge.svg)](https://github.com/oconneil/MXHRM/actions/workflows/codeql.yml)
+
 ## 🎯 Project Overview
 
 โปรเจกต์นี้เป็นการสร้าง **Modern Enterprise Full-Stack Web Application**
