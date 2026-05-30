@@ -6,11 +6,25 @@ on:
       - main
       - master
       - develop
+    paths:
+      - 'src/**'
+      - 'client/mxhrm-web/**'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/**'
+      - 'Makefile'
   pull_request:
     branches:
       - main
       - master
       - develop
+    paths:
+      - 'src/**'
+      - 'client/mxhrm-web/**'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/**'
+      - 'Makefile'
   workflow_dispatch:
 
 jobs:
