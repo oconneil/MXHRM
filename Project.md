@@ -1881,10 +1881,93 @@ Docker documentation / onboarding guide
 
 ---
 
+## ✅ Project 10.2: GitHub Actions CI
+
+### สิ่งที่ทำ
+
+```text
+เพิ่ม GitHub Actions workflow สำหรับ Backend + Frontend build
+เพิ่ม .NET restore/build ใน Release mode
+เพิ่ม Node.js setup และ npm cache
+เพิ่ม Angular npm ci และ production build
+เพิ่ม frontend build artifact upload
+เพิ่ม Docker Compose config validation
+เพิ่ม API Docker image build validation
+เพิ่ม Web Docker image build validation
+เพิ่ม GitHub Secrets pattern สำหรับ CI .env generation
+เพิ่ม workflow_dispatch สำหรับ manual run
+เพิ่ม branch filters สำหรับ main / master / develop
+เพิ่ม path filters เพื่อลด CI runs ที่ไม่จำเป็น
+เพิ่ม CodeQL workflow สำหรับ C# และ TypeScript security analysis
+เพิ่ม Dependabot config สำหรับ NuGet / npm / GitHub Actions
+แก้ Dependabot path ให้ถูกต้องที่ .github/dependabot.yml
+แก้ CodeQL action version ให้ใช้ supported version
+แก้ Angular dependency peer conflict หลัง Dependabot update
+เพิ่ม GitHub Actions step summary
+เพิ่ม CI / CodeQL status badges ใน Project.md และ README.md
+```
+
+### CI Flow
+
+```text
+Push / Pull Request / Manual Trigger
+   ↓
+MXHRM CI
+   ├── Build Backend
+   │      ├── dotnet restore
+   │      └── dotnet build Release
+   ├── Build Frontend
+   │      ├── npm ci
+   │      ├── npm run build
+   │      └── upload mxhrm-web-dist artifact
+   └── Docker Validation
+          ├── docker compose config
+          ├── docker build API image
+          └── docker build Web image
+```
+
+### Security Automation Flow
+
+```text
+Push / Pull Request / Manual Trigger
+   ↓
+CodeQL
+   ├── Analyze C#
+   └── Analyze JavaScript / TypeScript
+
+Weekly Schedule
+   ↓
+Dependabot
+   ├── NuGet updates
+   ├── npm updates
+   └── GitHub Actions updates
+```
+
+### จุดสำคัญที่ได้เรียนรู้
+
+```text
+GitHub Actions workflow structure
+CI trigger: push / pull_request / workflow_dispatch
+Branch filters
+Path filters
+Job dependency with needs
+GitHub Secrets
+Temporary .env generation in CI
+Build artifact upload
+Docker build validation in CI
+GitHub Actions step summary
+Status badges
+CodeQL code scanning
+Dependabot package ecosystem config
+Peer dependency conflict handling
+```
+
+---
+
 # 📊 Current Status
 
 ```text
-Progress: Core application complete through Project 10.1; containerized deployment baseline completed
+Progress: Core application complete through Project 10.2; CI/CD foundation completed
 ```
 
 ตอนนี้คุณมี:
@@ -2004,6 +2087,18 @@ Progress: Core application complete through Project 10.1; containerized deployme
 ✅ Makefile Docker workflow
 ✅ Docker.md developer guide
 ✅ Default admin user seeder
+✅ GitHub Actions Backend build
+✅ GitHub Actions Frontend build
+✅ GitHub Actions Docker validation
+✅ GitHub Actions workflow_dispatch manual run
+✅ GitHub Actions branch filters
+✅ GitHub Actions path filters
+✅ GitHub Actions step summary
+✅ Frontend build artifact upload
+✅ GitHub Secrets pattern for CI
+✅ CodeQL security analysis workflow
+✅ Dependabot dependency update automation
+✅ CI / CodeQL status badges
 ✅ Production-ready base
 ```
 
@@ -2022,7 +2117,6 @@ Junior → Mid-level Full-stack Developer
 ❌ Permission versioning / token invalidation after permission change
 ❌ Dashboard widgets
 ❌ Audit Report PDF export
-❌ CI/CD (GitHub Actions)
 ❌ Automated tests coverage
 ```
 
@@ -2320,6 +2414,7 @@ Completed:
 
 ```text
 Project 10.1 Containerized Deployment Baseline
+Project 10.2 GitHub Actions CI
 ```
 
 Completed output:
@@ -2334,13 +2429,19 @@ Container healthchecks and restart policy
 Docker Compose profiles for infra/app workflows
 Makefile developer commands
 Docker.md onboarding guide
+GitHub Actions backend/frontend build pipeline
+Docker validation pipeline
+CodeQL security scanning workflow
+Dependabot update automation
+CI artifact and summary reporting
+Status badges in documentation
 ```
 
 Remaining scope:
 
 ```text
-GitHub Actions CI/CD
 Production image tagging
+Push Docker images to registry
 Environment-specific compose files
 HTTPS termination
 Production logging hardening
@@ -2432,6 +2533,11 @@ CI/CD + deployment baseline
 ✔ Containerized SQL Server / Redis / Seq baseline
 ✔ Docker Compose profiles and healthchecks
 ✔ Developer Docker workflow with Makefile and Docker.md
+✔ GitHub Actions CI foundation
+✔ Docker validation in CI
+✔ CodeQL security analysis workflow
+✔ Dependabot dependency automation
+✔ CI/CodeQL status badges
 ✔ Completed auth/security foundation
 ✔ Scalable structure
 ✔ Full-stack integration
@@ -2452,6 +2558,7 @@ Backend + Frontend + Security + Clean Architecture + Performance + Background Jo
 JWT + Refresh Token + Role + Permission DB Mapping + Security Admin APIs/UI + Better Error UX + Auto Retry + Layer Separation + Redis Cache + Advanced Filtering + Hangfire Jobs + Audit Trail + Kendo Grid + Custom Grid Adapter + Route UX + Reporting + Excel Export + PDF Export + Async Report Generation + SignalR + Persistent Notification Center + NSwag Client Generation
 OpenAPI Contract-first Feature Services + Hybrid NSwag/Kendo Grid Integration
 Dockerized Full-stack Runtime + Nginx Reverse Proxy + Containerized Infra Baseline
+GitHub Actions CI Foundation + CodeQL + Dependabot Automation
 ```
 
 ---
@@ -2480,7 +2587,8 @@ Project 9.8 completed - Generic Realtime Notification with SignalR
 Project 9.8.1 completed - Realtime Notification Center
 Project 9.9 completed - Extend NSwag Usage + Typed Feature Service Boundary
 Project 10.1 completed - Containerized Deployment Baseline
-Next: Project 10.2 GitHub Actions CI
+Project 10.2 completed - GitHub Actions CI Foundation
+Next: Project 10.3 Docker Image Registry + Release Tagging
 ```
 
 ---
