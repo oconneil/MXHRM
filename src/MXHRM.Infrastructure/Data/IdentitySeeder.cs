@@ -9,6 +9,11 @@ namespace MXHRM.Infrastructure.Data;
 
 public static class IdentitySeeder
 {
+    private const string AdminRoleName = "Admin";
+    private const string AdminUserName = "admin";
+    private const string AdminPassword = "P@ssw0rd";
+    private const string AdminCompanyID = "JCROP";
+
     public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
@@ -28,6 +33,7 @@ public static class IdentitySeeder
 
         await SeedPermissionsAsync(db);
         await SeedRolePermissionsAsync(db, roleManager);
+        await SeedAdminUserAsync(userManager);
     }
 
 
@@ -115,5 +121,74 @@ public static class IdentitySeeder
         await db.SaveChangesAsync();
     }
 
+    private static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager)
+    {
+        var adminUser = await userManager.FindByNameAsync(AdminUserName);
+
+        if (adminUser is null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = AdminUserName,
+                Email = "admin@mxhrm.local",
+                EmailConfirmed = true,
+                CompanyID = AdminCompanyID,
+                DisplayName = "System Administrator",
+                IsActive = true
+            };
+
+            var createResult = await userManager.CreateAsync(adminUser, AdminPassword);
+
+            if (!createResult.Succeeded)
+            {
+                var errors = string.Join(", ", createResult.Errors.Select(x => x.Description));
+                throw new InvalidOperationException($"Failed to seed admin user. {errors}");
+            }
+        }
+        else
+        {
+            var hasChanges = false;
+
+            if (adminUser.CompanyID != AdminCompanyID)
+            {
+                adminUser.CompanyID = AdminCompanyID;
+                hasChanges = true;
+            }
+
+            if (adminUser.DisplayName != "System Administrator")
+            {
+                adminUser.DisplayName = "System Administrator";
+                hasChanges = true;
+            }
+
+            if (!adminUser.IsActive)
+            {
+                adminUser.IsActive = true;
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                var updateResult = await userManager.UpdateAsync(adminUser);
+
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join(", ", updateResult.Errors.Select(x => x.Description));
+                    throw new InvalidOperationException($"Failed to update seeded admin user. {errors}");
+                }
+            }
+        }
+
+        if (!await userManager.IsInRoleAsync(adminUser, AdminRoleName))
+        {
+            var roleResult = await userManager.AddToRoleAsync(adminUser, AdminRoleName);
+
+            if (!roleResult.Succeeded)
+            {
+                var errors = string.Join(", ", roleResult.Errors.Select(x => x.Description));
+                throw new InvalidOperationException($"Failed to assign Admin role to seeded admin user. {errors}");
+            }
+        }
+    }
 
 }

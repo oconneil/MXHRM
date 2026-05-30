@@ -25,6 +25,7 @@ using MXHRM.Api.Hubs;
 using MXHRM.Application.Common.Realtime;
 using Microsoft.AspNetCore.SignalR;
 using MXHRM.Api.SignalR;
+using Microsoft.AspNetCore.HttpOverrides;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +51,17 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 
 builder.Services.AddControllers();
+
+// Configure forwarded headers to correctly handle client IP and protocol when behind a reverse proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add SignalR services and configure the user ID provider for SignalR to use the current user's ID
 builder.Services.AddSignalR();
@@ -233,6 +245,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Enable forwarded headers middleware to process X-Forwarded-For and X-Forwarded-Proto headers
+app.UseForwardedHeaders();
+
 // Add Serilog request logging middleware
 app.UseSerilogRequestLogging();
 
@@ -279,6 +294,14 @@ else
 
 // Map controllers
 app.MapControllers();
+
+// Map a lightweight health endpoint for Docker and reverse proxy checks
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    service = "MXHRM.Api",
+    checkedAtUtc = DateTime.UtcNow
+}));
 
 // Map the SignalR hub for real-time communication
 app.MapHub<RealtimeHub>("/hubs/realtime");
