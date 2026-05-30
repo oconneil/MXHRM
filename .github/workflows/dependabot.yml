@@ -1,0 +1,50 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Bangkok"
+    open-pull-requests-limit: 5
+    groups:
+      dotnet:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/client/mxhrm-web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Bangkok"
+    open-pull-requests-limit: 5
+    groups:
+      angular-kendo:
+        patterns:
+          - "@angular/*"
+          - "@progress/*"
+          - "rxjs"
+          - "tslib"
+          - "zone.js"
+      frontend-tooling:
+        patterns:
+          - "@angular/build"
+          - "@angular/cli"
+          - "@angular/compiler-cli"
+          - "typescript"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Bangkok"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - "*"
