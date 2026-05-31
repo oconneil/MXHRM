@@ -658,6 +658,231 @@ Then remove only the intended volume.
 
 ---
 
+## Production-style Deployment with GHCR
+
+The CI pipeline publishes Docker images to GitHub Container Registry.
+
+```text
+GitHub Actions
+   ↓
+Build multi-platform images
+   ↓
+Push to GHCR
+   ├── ghcr.io/oconneil/mxhrm-api
+   └── ghcr.io/oconneil/mxhrm-web
+```
+
+This gives us a deployment flow where a server does not need source code or local Docker builds.
+
+The deploy machine only needs:
+
+```text
+docker-compose.prod.yml
+.env
+Docker / Docker Compose
+Access to GHCR packages if the images are private
+```
+
+---
+
+## Production Compose File
+
+Use `docker-compose.prod.yml` when you want to run images from GHCR instead of building from local source.
+
+```text
+docker-compose.yml
+= local development compose that builds images from source
+
+docker-compose.prod.yml
+= production-style compose that pulls images from GHCR
+```
+
+Key difference:
+
+```yaml
+api:
+  image: ghcr.io/oconneil/mxhrm-api:${IMAGE_TAG:-latest}
+
+web:
+  image: ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG:-latest}
+```
+
+In other words:
+
+```text
+dev compose  = build from local source code
+prod compose = pull prebuilt images from GHCR
+```
+
+---
+
+## Production Commands
+
+Pull images:
+
+```bash
+make prod-pull
+```
+
+Run production-style stack:
+
+```bash
+make prod-up
+```
+
+Check status:
+
+```bash
+make prod-ps
+```
+
+Follow logs:
+
+```bash
+make prod-logs
+```
+
+Stop stack:
+
+```bash
+make prod-down
+```
+
+---
+
+## Image Tags
+
+The production compose file uses:
+
+```text
+IMAGE_TAG
+```
+
+Default:
+
+```text
+latest
+```
+
+Examples:
+
+```bash
+IMAGE_TAG=latest make prod-up
+```
+
+```bash
+IMAGE_TAG=sha-abc1234 make prod-up
+```
+
+Image names:
+
+```text
+ghcr.io/oconneil/mxhrm-api:${IMAGE_TAG:-latest}
+ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG:-latest}
+```
+
+Typical tag strategy:
+
+```text
+latest       = latest successful build on default branch
+master       = branch tag
+sha-abc1234  = exact commit tag for rollback / traceability
+```
+
+Use SHA tags when you want a repeatable deployment:
+
+```bash
+IMAGE_TAG=sha-abc1234 make prod-up
+```
+
+---
+
+## Multi-platform Images
+
+CI builds images for:
+
+```text
+linux/amd64
+linux/arm64
+```
+
+This allows the same image tag to work on:
+
+```text
+x64 Linux servers
+Apple Silicon / ARM64 machines
+```
+
+Why this matters:
+
+```text
+If the image is only linux/amd64
+and the host is linux/arm64/v8
+Docker may run it through emulation and show a platform warning.
+```
+
+With multi-platform images, Docker automatically pulls the matching platform image.
+
+---
+
+## GHCR Login
+
+If the packages are private, login first:
+
+```bash
+docker login ghcr.io
+```
+
+Use:
+
+```text
+Username: your GitHub username
+Password: GitHub token with read:packages
+```
+
+If the packages are public, login may not be required.
+
+For CI publishing, GitHub Actions uses:
+
+```text
+GITHUB_TOKEN
+packages: write
+```
+
+For deploy machines pulling private images, use a token with:
+
+```text
+read:packages
+```
+
+---
+
+## Deployment Flow
+
+```text
+1. Push code to main / master / develop
+2. GitHub Actions builds API and Web images
+3. GitHub Actions pushes images to GHCR
+4. Deploy machine pulls images
+5. docker-compose.prod.yml runs the stack
+```
+
+Production-style deploy command:
+
+```bash
+make prod-pull
+make prod-up
+make prod-ps
+```
+
+Rollback idea:
+
+```bash
+IMAGE_TAG=sha-previous123 make prod-up
+```
+
+---
+
 ## Security Notes
 
 This setup is a development/staging baseline.

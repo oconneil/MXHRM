@@ -1964,10 +1964,97 @@ Peer dependency conflict handling
 
 ---
 
+## ✅ Project 10.3: Docker Image Registry + Release Tagging
+
+### สิ่งที่ทำ
+
+```text
+เพิ่ม GitHub Container Registry login ใน CI
+เพิ่ม packages: write permission ให้ docker job
+เพิ่ม docker/metadata-action สำหรับ API image
+เพิ่ม docker/metadata-action สำหรับ Web image
+เปลี่ยน docker build เป็น docker/build-push-action
+Push API image ไป GHCR
+Push Web image ไป GHCR
+เพิ่ม branch tag
+เพิ่ม sha tag สำหรับ traceability / rollback
+เพิ่ม latest tag เฉพาะ default branch
+ตั้ง PR ให้ build-only และไม่ push image
+เพิ่ม Docker image summary ใน GitHub Actions
+เพิ่ม docker-compose.prod.yml สำหรับ pull image จาก GHCR
+เพิ่ม IMAGE_TAG ใน .env.example
+เพิ่ม Makefile prod commands
+เพิ่ม multi-platform build: linux/amd64 + linux/arm64
+แก้ platform warning บน Apple Silicon / ARM64
+อัปเดต Docker.md สำหรับ production-style deployment ด้วย GHCR
+```
+
+### Registry Flow
+
+```text
+Push to main / master / develop
+   ↓
+GitHub Actions
+   ↓
+Build API + Web Docker images
+   ↓
+Tag images
+   ├── branch tag
+   ├── sha tag
+   └── latest on default branch
+   ↓
+Push to GHCR
+   ├── ghcr.io/oconneil/mxhrm-api
+   └── ghcr.io/oconneil/mxhrm-web
+```
+
+### Deployment Pull Flow
+
+```text
+Deploy machine
+   ↓
+docker-compose.prod.yml
+   ↓
+IMAGE_TAG
+   ↓
+Pull images from GHCR
+   ├── ghcr.io/oconneil/mxhrm-api:${IMAGE_TAG}
+   └── ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG}
+   ↓
+Run production-style stack
+```
+
+### Tag Strategy
+
+```text
+latest       = latest successful default branch build
+master       = branch tag
+sha-abc1234  = exact commit image for rollback / traceability
+```
+
+### จุดสำคัญที่ได้เรียนรู้
+
+```text
+GitHub Container Registry
+GITHUB_TOKEN package publishing
+Docker image metadata
+Docker image tagging strategy
+Branch tag / SHA tag / latest tag
+Build-only PR policy
+docker/build-push-action
+Multi-platform Docker build
+QEMU and Buildx
+Production compose without local build
+Deployment image version selection with IMAGE_TAG
+Rollback by SHA image tag
+```
+
+---
+
 # 📊 Current Status
 
 ```text
-Progress: Core application complete through Project 10.2; CI/CD foundation completed
+Progress: Core application complete through Project 10.3; Docker image registry and release tagging completed
 ```
 
 ตอนนี้คุณมี:
@@ -2099,6 +2186,15 @@ Progress: Core application complete through Project 10.2; CI/CD foundation compl
 ✅ CodeQL security analysis workflow
 ✅ Dependabot dependency update automation
 ✅ CI / CodeQL status badges
+✅ GHCR image publishing
+✅ Docker image metadata and release tags
+✅ Branch / SHA / latest image tags
+✅ PR build-only Docker policy
+✅ Multi-platform Docker images
+✅ docker-compose.prod.yml
+✅ IMAGE_TAG-based production compose
+✅ Makefile production commands
+✅ GHCR deployment notes in Docker.md
 ✅ Production-ready base
 ```
 
@@ -2415,6 +2511,7 @@ Completed:
 ```text
 Project 10.1 Containerized Deployment Baseline
 Project 10.2 GitHub Actions CI
+Project 10.3 Docker Image Registry + Release Tagging
 ```
 
 Completed output:
@@ -2435,13 +2532,16 @@ CodeQL security scanning workflow
 Dependabot update automation
 CI artifact and summary reporting
 Status badges in documentation
+Docker image publish pipeline to GHCR
+Branch / SHA / latest image tagging strategy
+Multi-platform image builds for amd64/arm64
+Production-style compose that pulls images from registry
+IMAGE_TAG-based deployment flow
 ```
 
 Remaining scope:
 
 ```text
-Production image tagging
-Push Docker images to registry
 Environment-specific compose files
 HTTPS termination
 Production logging hardening
@@ -2538,6 +2638,10 @@ CI/CD + deployment baseline
 ✔ CodeQL security analysis workflow
 ✔ Dependabot dependency automation
 ✔ CI/CodeQL status badges
+✔ Docker image publishing to GHCR
+✔ Release tagging with branch / SHA / latest
+✔ Multi-platform Docker images
+✔ Production-style compose with IMAGE_TAG
 ✔ Completed auth/security foundation
 ✔ Scalable structure
 ✔ Full-stack integration
@@ -2559,6 +2663,7 @@ JWT + Refresh Token + Role + Permission DB Mapping + Security Admin APIs/UI + Be
 OpenAPI Contract-first Feature Services + Hybrid NSwag/Kendo Grid Integration
 Dockerized Full-stack Runtime + Nginx Reverse Proxy + Containerized Infra Baseline
 GitHub Actions CI Foundation + CodeQL + Dependabot Automation
+GHCR Image Publishing + Release Tagging + Production Compose Pull Flow
 ```
 
 ---
@@ -2588,7 +2693,8 @@ Project 9.8.1 completed - Realtime Notification Center
 Project 9.9 completed - Extend NSwag Usage + Typed Feature Service Boundary
 Project 10.1 completed - Containerized Deployment Baseline
 Project 10.2 completed - GitHub Actions CI Foundation
-Next: Project 10.3 Docker Image Registry + Release Tagging
+Project 10.3 completed - Docker Image Registry + Release Tagging
+Next: Project 10.4 Environment-specific Compose + Production Hardening
 ```
 
 ---
