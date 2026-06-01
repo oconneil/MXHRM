@@ -2051,10 +2051,90 @@ Rollback by SHA image tag
 
 ---
 
+## 🚧 Project 10.4: Environment-specific Compose + Production Hardening
+
+Status: In Progress
+
+### ทำถึงไหนแล้ว
+
+```text
+Step 1 completed - แยก production port exposure
+Step 2 completed - เพิ่ม docker-compose.prod.local.yml สำหรับ local production debugging
+Step 3 completed - เพิ่ม .env.production.example และ Docker.md production env note
+Step 4 completed - เพิ่ม production runtime defaults และ web container hardening
+```
+
+### สิ่งที่ทำแล้ว
+
+```text
+ปรับ docker-compose.prod.yml ให้ production เปิด public port เฉพาะ web/nginx
+ปิด public port ของ api / sqlserver / redis / seq ใน production compose
+สร้าง docker-compose.prod.local.yml สำหรับ local debug/test
+เพิ่ม Makefile prod-local commands
+เพิ่ม .env.production.example สำหรับ production-style secrets template
+อัปเดต Docker.md ให้แนะนำ production env setup
+เพิ่ม TZ runtime variable
+เพิ่ม DOTNET_ENVIRONMENT สำหรับ API
+เพิ่ม web read_only hardening
+เพิ่ม web tmpfs สำหรับ /var/cache/nginx /var/run /tmp
+```
+
+### Production Port Model
+
+```text
+Public entry point
+   ↓
+web / nginx
+   ↓ internal Docker network
+api
+   ├── sqlserver
+   ├── redis
+   └── seq
+```
+
+### Environment Compose Model
+
+```text
+docker-compose.yml
+   = local development build from source
+
+docker-compose.prod.yml
+   = hardened production-style compose pulling images from GHCR
+
+docker-compose.prod.local.yml
+   = local override for debugging production-style stack
+```
+
+### Step ที่เหลือใน Project 10.4
+
+```text
+Step 5 - เพิ่ม resource limits / reservations ให้ production services
+Step 6 - ปรับ production logging policy และ Seq exposure strategy
+Step 7 - เพิ่ม HTTPS-ready reverse proxy notes / TLS termination pattern
+Step 8 - เพิ่ม backup / restore notes สำหรับ SQL Server volume
+Step 9 - เพิ่ม deployment checklist ใน Docker.md / Project.md
+Step 10 - ทดสอบ final production-style compose flow และสรุป Project 10.4
+```
+
+### จุดสำคัญที่ได้เรียนรู้แล้ว
+
+```text
+Production port exposure hardening
+Internal-only infrastructure services
+Docker Compose override files
+Environment-specific compose pattern
+Production secrets template
+Runtime environment defaults
+Container read-only filesystem baseline
+tmpfs for writable runtime paths
+```
+
+---
+
 # 📊 Current Status
 
 ```text
-Progress: Core application complete through Project 10.3; Docker image registry and release tagging completed
+Progress: Core application complete through Project 10.4 Step 4; production hardening in progress
 ```
 
 ตอนนี้คุณมี:
@@ -2195,6 +2275,16 @@ Progress: Core application complete through Project 10.3; Docker image registry 
 ✅ IMAGE_TAG-based production compose
 ✅ Makefile production commands
 ✅ GHCR deployment notes in Docker.md
+✅ Production compose port hardening
+✅ Internal-only API / SQL Server / Redis / Seq in production compose
+✅ docker-compose.prod.local.yml
+✅ Production local debug override compose
+✅ .env.production.example
+✅ Production env setup notes in Docker.md
+✅ TZ runtime variable
+✅ DOTNET_ENVIRONMENT production runtime config
+✅ Web container read-only hardening
+✅ Web tmpfs writable runtime paths
 ✅ Production-ready base
 ```
 
@@ -2213,6 +2303,7 @@ Junior → Mid-level Full-stack Developer
 ❌ Permission versioning / token invalidation after permission change
 ❌ Dashboard widgets
 ❌ Audit Report PDF export
+❌ Project 10.4 remaining production hardening steps
 ❌ Automated tests coverage
 ```
 
@@ -2514,6 +2605,13 @@ Project 10.2 GitHub Actions CI
 Project 10.3 Docker Image Registry + Release Tagging
 ```
 
+In progress:
+
+```text
+Project 10.4 Environment-specific Compose + Production Hardening
+Current point: Step 4 completed
+```
+
 Completed output:
 
 ```text
@@ -2537,16 +2635,21 @@ Branch / SHA / latest image tagging strategy
 Multi-platform image builds for amd64/arm64
 Production-style compose that pulls images from registry
 IMAGE_TAG-based deployment flow
+Production compose port hardening
+Production local override compose
+Production env template
+Web read-only hardening baseline
 ```
 
 Remaining scope:
 
 ```text
-Environment-specific compose files
-HTTPS termination
-Production logging hardening
-Backup / restore strategy
-Deployment checklist
+Project 10.4 Step 5 - Resource limits / reservations
+Project 10.4 Step 6 - Production logging policy / Seq exposure strategy
+Project 10.4 Step 7 - HTTPS termination pattern
+Project 10.4 Step 8 - SQL Server backup / restore notes
+Project 10.4 Step 9 - Deployment checklist
+Project 10.4 Step 10 - Final production-style compose verification + lecture summary
 ```
 
 Expected output:
@@ -2642,6 +2745,10 @@ CI/CD + deployment baseline
 ✔ Release tagging with branch / SHA / latest
 ✔ Multi-platform Docker images
 ✔ Production-style compose with IMAGE_TAG
+✔ Environment-specific compose pattern
+✔ Production port exposure hardening
+✔ Production env template
+✔ Web read-only hardening baseline
 ✔ Completed auth/security foundation
 ✔ Scalable structure
 ✔ Full-stack integration
@@ -2664,6 +2771,7 @@ OpenAPI Contract-first Feature Services + Hybrid NSwag/Kendo Grid Integration
 Dockerized Full-stack Runtime + Nginx Reverse Proxy + Containerized Infra Baseline
 GitHub Actions CI Foundation + CodeQL + Dependabot Automation
 GHCR Image Publishing + Release Tagging + Production Compose Pull Flow
+Environment-specific Compose + Production Hardening Step 4
 ```
 
 ---
@@ -2694,7 +2802,9 @@ Project 9.9 completed - Extend NSwag Usage + Typed Feature Service Boundary
 Project 10.1 completed - Containerized Deployment Baseline
 Project 10.2 completed - GitHub Actions CI Foundation
 Project 10.3 completed - Docker Image Registry + Release Tagging
-Next: Project 10.4 Environment-specific Compose + Production Hardening
+Project 10.4 in progress - Environment-specific Compose + Production Hardening
+Project 10.4 Step 4 completed - Runtime defaults + web read-only hardening
+Next: Project 10.4 Step 5 Resource Limits / Reservations
 ```
 
 ---

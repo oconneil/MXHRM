@@ -3,18 +3,10 @@ services:
     image: datalust/seq:latest
     container_name: mxhrm-seq
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"      # ใช้ CPU ได้สูงสุด 1 core
-          memory: 1g       # ชน 1GB เมื่อไหร่ OOM kill — log store ไม่ควรกินเกินนี้
-        reservations:
-          memory: 256m     # การันตีขั้นต่ำให้ start ได้เสมอ
-    # ports:
-    #   - "5341:80"
+    ports:
+      - "5341:80"
     environment:
       - ACCEPT_EULA=Y
-      - TZ=${TZ:-Asia/Bangkok}
       - SEQ_FIRSTRUN_ADMINUSERNAME=${SEQ_ADMIN_USERNAME}
       - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD}
     volumes:
@@ -24,39 +16,20 @@ services:
     image: redis:7-alpine
     container_name: mxhrm-redis
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 384m     # เผื่อ overhead เหนือ maxmemory ที่ตั้งใน command
-        reservations:
-          memory: 64m
-    environment:
-      - TZ=${TZ:-Asia/Bangkok}
-    # ports:
-    #   - "6379:6379"
+    ports:
+      - "6379:6379"
     volumes:
       - redis-data:/data
-    # --maxmemory 256mb: บอก redis เองให้ evict cache ก่อนชน container limit (กัน OOM kill)
-    # allkeys-lru: เมื่อเต็ม ลบ key ที่ไม่ได้ใช้นานสุดออกก่อน
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes
 
   sqlserver:
     image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: mxhrm-sqlserver
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 3g       # งานหนักสุดในระบบ
-        reservations:
-          memory: 2g       # ⚠️ Azure SQL Edge ต้องการ >= 2GB ถึงจะ start ได้
-    # ports:
-    #   - "1433:1433"
+    ports:
+      - "1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      TZ: "${TZ:-Asia/Bangkok}"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
       MSSQL_PID: "Developer"
     volumes:
@@ -72,13 +45,6 @@ services:
     image: ghcr.io/oconneil/mxhrm-api:${IMAGE_TAG:-latest}
     container_name: mxhrm-api
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "1.5"
-          memory: 1g       # .NET runtime + request processing
-        reservations:
-          memory: 384m
     depends_on:
       redis:
         condition: service_started
@@ -86,12 +52,11 @@ services:
         condition: service_started
       sqlserver:
         condition: service_healthy
-    # ports:
-    #   - "8080:8080"
+    ports:
+      - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Container
       ASPNETCORE_URLS: http://+:8080
-      TZ: "${TZ:-Asia/Bangkok}"
 
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${MXHRM_DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
 
@@ -113,20 +78,6 @@ services:
     image: ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG:-latest}
     container_name: mxhrm-web
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 192m     # nginx เสิร์ฟไฟล์ static เบามาก
-        reservations:
-          memory: 32m
-    read_only: true
-    tmpfs:
-      - /var/cache/nginx
-      - /var/run
-      - /tmp
-    environment:
-      - TZ=${TZ:-Asia/Bangkok}
     depends_on:
       - api
     ports:

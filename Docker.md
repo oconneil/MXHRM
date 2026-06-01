@@ -38,6 +38,7 @@ API Container (ASP.NET Core)
 | `docker-compose.yml` | Defines all containers, profiles, ports, environment variables, volumes, and healthchecks |
 | `.env` | Local secrets and environment values used by Docker Compose |
 | `.env.example` | Safe template for required environment values |
+| `.env.production.example` | Production-style template for deployment secrets and image tag |
 | `Makefile` | Short commands for daily Docker workflow |
 | `src/MXHRM.Api/Dockerfile` | Builds and runs the ASP.NET Core API container |
 | `client/mxhrm-web/Dockerfile` | Builds Angular and serves it with Nginx |
@@ -100,6 +101,28 @@ SEQ_ADMIN_PASSWORD=P@ssw0rd
 Do not commit `.env`.
 
 Commit `.env.example` only.
+
+For production-style deployment, create `.env` from `.env.production.example` instead.
+
+```bash
+cp .env.production.example .env
+```
+
+Then replace all `change-me` values with strong secrets.
+
+Production template values include:
+
+```text
+MSSQL_SA_PASSWORD
+MXHRM_DB_NAME
+JWT_ISSUER
+JWT_AUDIENCE
+JWT_SECRET_KEY
+JWT_ACCESS_TOKEN_MINUTES
+SEQ_ADMIN_USERNAME
+SEQ_ADMIN_PASSWORD
+IMAGE_TAG
+```
 
 ---
 

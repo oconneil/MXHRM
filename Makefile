@@ -1,4 +1,4 @@
-.PHONY: infra-up infra-down app-up app-down app-build ps logs logs-api logs-web logs-db restart-api restart-web clean prod-pull prod-up prod-down prod-ps prod-logs
+.PHONY: infra-up infra-down app-up app-down app-build ps logs logs-api logs-web logs-db restart-api restart-web clean prod-pull prod-up prod-down prod-ps prod-logs prod-local-up prod-local-down prod-local-ps prod-local-logs
 
 infra-up:
 	docker compose --profile infra up -d
@@ -53,3 +53,15 @@ prod-ps:
 
 prod-logs:
 	docker compose -f docker-compose.prod.yml logs -f
+
+prod-local-up:
+	docker compose -f docker-compose.prod.yml -f docker-compose.prod.local.yml up -d
+
+prod-local-down:
+	docker compose -f docker-compose.prod.yml -f docker-compose.prod.local.yml down
+
+prod-local-ps:
+	docker compose -f docker-compose.prod.yml -f docker-compose.prod.local.yml ps
+
+prod-local-logs:
+	docker compose -f docker-compose.prod.yml -f docker-compose.prod.local.yml logs -f
