@@ -1,8 +1,17 @@
+# x-* = extension field — Docker จะ "มองข้าม" key ที่ขึ้นต้นด้วย x- ตอนรัน
+# แต่เราใช้มันเก็บ "แม่แบบ" ที่จะ reuse ได้ ผ่าน anchor (&default-logging)
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"     # ไฟล์ log 1 ไฟล์ใหญ่ได้ไม่เกิน 10MB
+    max-file: "3"       # เก็บย้อนหลังได้ 3 ไฟล์ → รวมสูงสุด ~30MB ต่อ container
+
 services:
   seq:
     image: datalust/seq:latest
     container_name: mxhrm-seq
     restart: unless-stopped
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -10,8 +19,8 @@ services:
           memory: 1g       # ชน 1GB เมื่อไหร่ OOM kill — log store ไม่ควรกินเกินนี้
         reservations:
           memory: 256m     # การันตีขั้นต่ำให้ start ได้เสมอ
-    # ports:
-    #   - "5341:80"
+    ports:
+      - "127.0.0.1:5341:80"
     environment:
       - ACCEPT_EULA=Y
       - TZ=${TZ:-Asia/Bangkok}
@@ -24,6 +33,7 @@ services:
     image: redis:7-alpine
     container_name: mxhrm-redis
     restart: unless-stopped
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -45,6 +55,7 @@ services:
     image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: mxhrm-sqlserver
     restart: unless-stopped
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -61,6 +72,7 @@ services:
       MSSQL_PID: "Developer"
     volumes:
       - sqlserver-data:/var/opt/mssql
+      - sqlserver-backups:/var/opt/mssql/backups
     healthcheck:
       test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/localhost/1433'"]
       interval: 10s
@@ -72,6 +84,7 @@ services:
     image: ghcr.io/oconneil/mxhrm-api:${IMAGE_TAG:-latest}
     container_name: mxhrm-api
     restart: unless-stopped
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -113,6 +126,7 @@ services:
     image: ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG:-latest}
     container_name: mxhrm-web
     restart: unless-stopped
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -142,3 +156,4 @@ volumes:
   seq-data:
   redis-data:
   sqlserver-data:
+  sqlserver-backups:

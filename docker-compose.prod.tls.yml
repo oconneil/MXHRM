@@ -1,0 +1,27 @@
+# Edge TLS layer — รันคู่กับไฟล์ prod หลัก:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.prod.tls.yml up -d
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: mxhrm-caddy
+    restart: unless-stopped
+    # หมายเหตุ: anchor *default-logging อยู่คนละไฟล์ → เรียกข้ามไฟล์ไม่ได้
+    # ต้องเขียน logging block เต็มๆ ตรงนี้
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - web
+    ports:
+      - "80:80"      # http (Caddy จะ redirect ไป https เอง)
+      - "443:443"    # https
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data       # ⚠️ เก็บ cert ไว้ที่นี่ — สำคัญมาก!
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

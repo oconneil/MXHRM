@@ -475,6 +475,134 @@ reverse proxy correctness
 
 ---
 
+## HTTPS / TLS Termination
+
+Production traffic should be served over HTTPS. We terminate TLS at a dedicated
+edge reverse proxy (Caddy) that sits in front of the `web` container, instead of
+managing certificates inside the app containers.
+
+```text
+Internet (HTTPS :443)
+   ↓  TLS terminated here (single edge)
+caddy (edge proxy)
+   ↓  plain HTTP over the internal Docker network
+web (nginx) → api → ...
+```
+
+### Why an edge proxy
+
+```text
+Caddy obtains and auto-renews Let's Encrypt certificates automatically
+web / api never deal with certificates
+One place to manage TLS
+```
+
+### Files
+
+```text
+Caddyfile                       = edge proxy + TLS config
+docker-compose.prod.tls.yml     = adds the caddy service in front of web
+```
+
+### Run with the TLS edge
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.prod.tls.yml up -d
+```
+
+### Local testing without a domain
+
+`Caddyfile` uses `hrm.localhost` with `tls internal`, so Caddy issues a
+self-signed certificate for local testing. Browsers will warn about the
+untrusted certificate — this is expected. Open:
+
+```text
+https://hrm.localhost
+```
+
+### Going to production with a real domain
+
+```text
+1. Point the domain DNS A record to the server public IP
+2. In Caddyfile, replace hrm.localhost with the real domain
+3. Remove the "tls internal" line so Caddy requests a real Let's Encrypt cert
+4. Make sure the caddy-data volume persists (stores issued certs)
+```
+
+> Let's Encrypt validates domain ownership by reaching the server publicly,
+> so a real certificate requires a public domain + reachable ports 80/443.
+> The `caddy-data` volume must persist or Caddy will re-request certs on every
+> restart and hit Let's Encrypt rate limits.
+
+### Forwarded protocol chain
+
+Because there are now two proxies (caddy → nginx), the original request scheme
+must be preserved end to end. Nginx must forward the incoming
+`X-Forwarded-Proto` rather than overwrite it with its own `$scheme`:
+
+```text
+map $http_x_forwarded_proto $forwarded_proto {
+    default $scheme;
+    "~.+"   $http_x_forwarded_proto;
+}
+proxy_set_header X-Forwarded-Proto $forwarded_proto;   # in /api/ AND /hubs/
+```
+
+This must be applied to every proxied location, including `/hubs/` (SignalR),
+otherwise realtime connections may be treated as insecure behind HTTPS.
+
+---
+
+## Database Backup / Restore
+
+Database data lives in the `sqlserver-data` Docker volume. Never back up by
+copying that volume while the database is running — the engine writes to several
+files concurrently, so a raw copy can be inconsistent (torn). Always use the
+SQL Server native `BACKUP DATABASE` command, which produces a transactionally
+consistent `.bak` file.
+
+### Backup target volume
+
+`docker-compose.prod.yml` mounts a dedicated backups volume on the sqlserver
+service so the engine can write `.bak` files:
+
+```text
+sqlserver-backups:/var/opt/mssql/backups
+```
+
+### Scripts
+
+```text
+scripts/backup-db.sh    = BACKUP DATABASE → .bak, then copy it to ./backups on the host
+scripts/restore-db.sh   = copy a .bak into the container and RESTORE DATABASE
+```
+
+The Azure SQL Edge image does not ship `sqlcmd`, so the scripts run it from a
+throwaway `mcr.microsoft.com/mssql-tools` container that shares the sqlserver
+container network (`--network container:mxhrm-sqlserver`, then `-S localhost`).
+
+### Usage
+
+```bash
+# Backup (stack must be running)
+./scripts/backup-db.sh
+
+# Restore from a specific .bak
+./scripts/restore-db.sh ./backups/MXHRM-20260601-120000.bak
+```
+
+### Operational notes
+
+```text
+3-2-1 rule: keep 3 copies, on 2 media, with 1 off-site (upload ./backups to cloud)
+Test restores regularly — an untested backup is not a backup
+Run from the project directory so "source .env" resolves (cron starts in $HOME)
+The real .env (with real secrets) must exist on the server; it is not in git
+RESTORE uses WITH REPLACE — on real production prefer restoring to a new name first
+```
+
+---
+
 ## Common Troubleshooting
 
 ### Compose says a variable is not set

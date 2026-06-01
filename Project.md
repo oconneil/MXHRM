@@ -2051,9 +2051,9 @@ Rollback by SHA image tag
 
 ---
 
-## 🚧 Project 10.4: Environment-specific Compose + Production Hardening
+## ✅ Project 10.4: Environment-specific Compose + Production Hardening
 
-Status: In Progress
+Status: Completed
 
 ### ทำถึงไหนแล้ว
 
@@ -2062,6 +2062,12 @@ Step 1 completed - แยก production port exposure
 Step 2 completed - เพิ่ม docker-compose.prod.local.yml สำหรับ local production debugging
 Step 3 completed - เพิ่ม .env.production.example และ Docker.md production env note
 Step 4 completed - เพิ่ม production runtime defaults และ web container hardening
+Step 5 completed - เพิ่ม resource limits / reservations ให้ทุก production service
+Step 6 completed - เพิ่ม Docker log rotation policy และ Seq localhost-only exposure
+Step 7 completed - เพิ่ม Caddy edge TLS termination + nginx forwarded-proto chain fix
+Step 8 completed - เพิ่ม SQL Server BACKUP/RESTORE scripts + backups volume
+Step 9 completed - เพิ่ม DEPLOYMENT.md production deployment checklist (5 เฟส)
+Step 10 completed - ตรวจ final compose flow ทุก combo + สรุป Project 10.4
 ```
 
 ### สิ่งที่ทำแล้ว
@@ -2108,12 +2114,30 @@ docker-compose.prod.local.yml
 ### Step ที่เหลือใน Project 10.4
 
 ```text
-Step 5 - เพิ่ม resource limits / reservations ให้ production services
-Step 6 - ปรับ production logging policy และ Seq exposure strategy
-Step 7 - เพิ่ม HTTPS-ready reverse proxy notes / TLS termination pattern
-Step 8 - เพิ่ม backup / restore notes สำหรับ SQL Server volume
-Step 9 - เพิ่ม deployment checklist ใน Docker.md / Project.md
-Step 10 - ทดสอบ final production-style compose flow และสรุป Project 10.4
+(none — Project 10.4 เสร็จสมบูรณ์ทั้ง 10 steps)
+```
+
+### สรุป Project 10.4
+
+```text
+แยก compose ตาม environment: dev (build) / prod (GHCR pull) / prod.local (debug)
+Production เปิด public เฉพาะ web; api/sql/redis/seq เป็น internal-only
+Resource limits + reservations กัน noisy-neighbor และการันตี start ได้
+Docker log rotation (json-file max-size/max-file) กัน disk เต็ม
+Seq เข้าถึงแบบ localhost-only ผ่าน SSH tunnel
+Caddy edge TLS termination + auto Let's Encrypt (tls internal สำหรับ local)
+Nginx forwarded-proto chain fix ครบทั้ง /api และ /hubs
+SQL Server native BACKUP/RESTORE scripts + dedicated backups volume
+DEPLOYMENT.md 5-phase production checklist
+ตรวจ final compose ทุก combo ผ่าน
+```
+
+### ค้างไว้พัฒนาต่อ (optional)
+
+```text
+prod.local.yml ยังเป็น standalone — ควร refactor เป็น override ของ prod.yml กัน config drift
+Audit Report PDF export
+Automated tests coverage
 ```
 
 ### จุดสำคัญที่ได้เรียนรู้แล้ว
@@ -2134,7 +2158,7 @@ tmpfs for writable runtime paths
 # 📊 Current Status
 
 ```text
-Progress: Core application complete through Project 10.4 Step 4; production hardening in progress
+Progress: Core application complete through Project 10.4; production hardening complete 🎉
 ```
 
 ตอนนี้คุณมี:
@@ -2804,7 +2828,14 @@ Project 10.2 completed - GitHub Actions CI Foundation
 Project 10.3 completed - Docker Image Registry + Release Tagging
 Project 10.4 in progress - Environment-specific Compose + Production Hardening
 Project 10.4 Step 4 completed - Runtime defaults + web read-only hardening
-Next: Project 10.4 Step 5 Resource Limits / Reservations
+Project 10.4 Step 5 completed - Resource Limits / Reservations
+Project 10.4 Step 6 completed - Production Logging Policy + Seq localhost-only Exposure
+Project 10.4 Step 7 completed - Caddy Edge TLS Termination + Forwarded-Proto Chain
+Project 10.4 Step 8 completed - SQL Server Backup / Restore Scripts
+Project 10.4 Step 9 completed - DEPLOYMENT.md Production Checklist
+Project 10.4 Step 10 completed - Final Verification + Summary
+✅ Project 10.4 COMPLETE — production hardening done
+Next: (optional) refactor prod.local เป็น override / Audit Report PDF / automated tests
 ```
 
 ---

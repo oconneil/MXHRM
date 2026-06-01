@@ -1,0 +1,10 @@
+{
+    # email สำหรับ Let's Encrypt แจ้งเตือนเวลา cert ใกล้หมดอายุ
+    email oconneil@hotmail.com
+}
+hrm.localhost {
+    encode gzip
+    # tls internal = Caddy ออก self-signed cert เองสำหรับเทสต์
+    tls internal
+    reverse_proxy web:80
+}
