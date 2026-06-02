@@ -2327,8 +2327,8 @@ Junior → Mid-level Full-stack Developer
 ❌ Permission versioning / token invalidation after permission change
 ❌ Dashboard widgets
 ❌ Audit Report PDF export
-❌ Project 10.4 remaining production hardening steps
-❌ Automated tests coverage
+✅ Project 10.4 production hardening (complete — all 10 steps)
+🟡 Automated tests (foundation added: 8 tests in 2 projects + CI gate via dotnet test; ขยาย coverage ต่อ)
 ```
 
 ---
