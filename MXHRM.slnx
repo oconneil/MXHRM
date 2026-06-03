@@ -5,4 +5,9 @@
     <Project Path="src/MXHRM.Domain/MXHRM.Domain.csproj" />
     <Project Path="src/MXHRM.Infrastructure/MXHRM.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MXHRM.Api.Tests/MXHRM.Api.Tests.csproj" />
+    <Project Path="tests/MXHRM.Application.Tests/MXHRM.Application.Tests.csproj" />
+    <Project Path="tests/MXHRM.Infrastructure.Tests/MXHRM.Infrastructure.Tests.csproj" />
+  </Folder>
 </Solution>

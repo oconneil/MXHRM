@@ -56,7 +56,12 @@ public static class DependencyInjection
                 });
         });
 
-        services.AddHangfireServer();
+        // Allow disabling the Hangfire worker (e.g. in integration tests, or for
+        // web-only instances that delegate background processing to a separate worker).
+        if (configuration.GetValue("Hangfire:UseServer", true))
+        {
+            services.AddHangfireServer();
+        }
 
         services.AddStackExchangeRedisCache(options =>
         {

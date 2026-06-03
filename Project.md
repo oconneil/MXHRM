@@ -2155,6 +2155,60 @@ tmpfs for writable runtime paths
 
 ---
 
+## ✅ Project 11: Automated Testing Foundation
+
+### สิ่งที่ทำ
+
+```text
+สร้าง test projects ครบ 3 ชั้นพีระมิด (xUnit)
+MXHRM.Application.Tests — unit test validators (Fact/Theory + FluentValidation TestHelper)
+MXHRM.Infrastructure.Tests — unit test ด้วย Moq + integration test ด้วย EF Core InMemory
+MXHRM.Api.Tests — API integration test ด้วย WebApplicationFactory
+เทสต์ EmployeeService: cache-hit / cache-miss / cache invalidation (Create, Delete)
+Refactor Program.cs ให้ testable: guard seeding + recurring jobs ด้วย Testing environment
+เพิ่ม Hangfire:UseServer config flag ปิด background worker ได้
+แก้ ApiFactory config timing ด้วย environment variables
+สร้าง MXHRM.slnx รวมทุก project (.NET 10 XML solution format)
+เสียบ dotnet test เข้า GitHub Actions CI เป็น gate ก่อน build/publish image
+รวม 12 tests เขียวทั้งหมด
+```
+
+### Test Pyramid
+
+```text
+Unit (pure)       — validator                          (Application.Tests)
+Unit (mock)       — service + Moq isolation             (Infrastructure.Tests)
+Integration (DB)  — EF Core InMemory query / cache      (Infrastructure.Tests)
+API Integration   — WebApplicationFactory full pipeline (Api.Tests)
+```
+
+### จุดเชื่อมต่อหลัก
+
+```text
+Push / PR
+   ↓
+GitHub Actions CI
+   ↓ dotnet test MXHRM.slnx --configuration Release
+12 tests (Application + Infrastructure + Api)
+   ↓ ถ้าแดง → build/publish image ถูกบล็อก
+```
+
+### Skill ที่ได้
+
+```text
+xUnit Fact / Theory / AAA pattern
+Moq Setup / Returns / Verify / Behavior Verification
+EF Core InMemory Integration Testing
+WebApplicationFactory API Integration Testing
+Testable Startup Design (environment guards + config flags)
+Config Timing in Minimal Hosting
+Reading Test Failures / Compile Errors
+.slnx Solution + CI Test Gate
+Red-Green Debug Cycle
+```
+
+---
+
 # 📊 Current Status
 
 ```text
@@ -2328,7 +2382,7 @@ Junior → Mid-level Full-stack Developer
 ❌ Dashboard widgets
 ❌ Audit Report PDF export
 ✅ Project 10.4 production hardening (complete — all 10 steps)
-🟡 Automated tests (foundation added: 8 tests in 2 projects + CI gate via dotnet test; ขยาย coverage ต่อ)
+🟡 Automated tests — foundation ครบ 3 ชั้นพีระมิด (12 tests, 3 projects, .slnx + CI gate); เหลือขยาย coverage ให้ครอบคลุม feature อื่นๆ
 ```
 
 ---
@@ -2826,7 +2880,7 @@ Project 9.9 completed - Extend NSwag Usage + Typed Feature Service Boundary
 Project 10.1 completed - Containerized Deployment Baseline
 Project 10.2 completed - GitHub Actions CI Foundation
 Project 10.3 completed - Docker Image Registry + Release Tagging
-Project 10.4 in progress - Environment-specific Compose + Production Hardening
+Project 10.4 completed - Environment-specific Compose + Production Hardening
 Project 10.4 Step 4 completed - Runtime defaults + web read-only hardening
 Project 10.4 Step 5 completed - Resource Limits / Reservations
 Project 10.4 Step 6 completed - Production Logging Policy + Seq localhost-only Exposure
@@ -2835,7 +2889,8 @@ Project 10.4 Step 8 completed - SQL Server Backup / Restore Scripts
 Project 10.4 Step 9 completed - DEPLOYMENT.md Production Checklist
 Project 10.4 Step 10 completed - Final Verification + Summary
 ✅ Project 10.4 COMPLETE — production hardening done
-Next: (optional) refactor prod.local เป็น override / Audit Report PDF / automated tests
+✅ Project 11 COMPLETE — automated testing foundation (12 tests, 3-tier pyramid, .slnx, CI gate)
+Next: ขยาย test coverage / Audit Report PDF / refactor prod.local เป็น override / Dashboard widgets
 ```
 
 ---

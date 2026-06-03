@@ -306,30 +306,39 @@ app.MapGet("/health", () => Results.Ok(new
 // Map the SignalR hub for real-time communication
 app.MapHub<RealtimeHub>("/hubs/realtime");
 
-// Seed initial data (roles and admin user)
-await IdentitySeeder.SeedRolesAsync(app.Services);
+// In the Testing environment we skip infra-coupled startup side effects
+// (DB seeding + Hangfire recurring jobs) so WebApplicationFactory can boot the app
+// without a real SQL Server. This is what makes the API integration-testable.
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    // Seed initial data (roles and admin user)
+    await IdentitySeeder.SeedRolesAsync(app.Services);
 
-// Configure recurring jobs
-var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
-recurringJobManager.AddOrUpdate<SystemHealthJob>(
-    "system-health-job",            // Unique ID for the job
-    job => job.ExecuteAsync(),      // method to execute
-    Cron.Minutely);                 // Run every minute for demonstration; adjust as needed in production
+    // Configure recurring jobs
+    var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<SystemHealthJob>(
+        "system-health-job",            // Unique ID for the job
+        job => job.ExecuteAsync(),      // method to execute
+        Cron.Minutely);                 // Run every minute for demonstration; adjust as needed in production
 
-// Get the cron expression for the refresh token cleanup job from configuration, with a default fallback
-var refreshTokenCleanupCron = builder.Configuration["RefreshTokenCleanup:Cron"]
-    ?? Cron.Daily(2); // Default to daily at 2 AM if not configured
-recurringJobManager.AddOrUpdate<CleanupExpiredRefreshTokensJob>(
-    "cleanup-expired-refresh-tokens",   // Unique ID for the job
-    job => job.ExecuteAsync(),          // method to execute
-    refreshTokenCleanupCron);           // Run based on the configured cron expression (default is daily at 2 AM)
+    // Get the cron expression for the refresh token cleanup job from configuration, with a default fallback
+    var refreshTokenCleanupCron = builder.Configuration["RefreshTokenCleanup:Cron"]
+        ?? Cron.Daily(2); // Default to daily at 2 AM if not configured
+    recurringJobManager.AddOrUpdate<CleanupExpiredRefreshTokensJob>(
+        "cleanup-expired-refresh-tokens",   // Unique ID for the job
+        job => job.ExecuteAsync(),          // method to execute
+        refreshTokenCleanupCron);           // Run based on the configured cron expression (default is daily at 2 AM)
 
-// Get the cron expression for the employee report job from configuration, with a default fallback
-var employeeReportCron = builder.Configuration["EmployeeReport:Cron"]
-    ?? Cron.Daily(6);
-recurringJobManager.AddOrUpdate<EmployeeReportJob>(
-    "employee-summary-report",
-    job => job.ExecuteAsync(),
-    employeeReportCron);
+    // Get the cron expression for the employee report job from configuration, with a default fallback
+    var employeeReportCron = builder.Configuration["EmployeeReport:Cron"]
+        ?? Cron.Daily(6);
+    recurringJobManager.AddOrUpdate<EmployeeReportJob>(
+        "employee-summary-report",
+        job => job.ExecuteAsync(),
+        employeeReportCron);
+}
 
 app.Run();
+
+// Expose the implicit Program class to the integration-test project (WebApplicationFactory<Program>)
+public partial class Program;

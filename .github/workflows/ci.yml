@@ -60,9 +60,7 @@ jobs:
         run: dotnet build src/MXHRM.Api/MXHRM.Api.csproj --configuration Release --no-restore
 
       - name: Test backend
-        run: |
-          dotnet test tests/MXHRM.Application.Tests --configuration Release
-          dotnet test tests/MXHRM.Infrastructure.Tests --configuration Release
+        run: dotnet test MXHRM.slnx --configuration Release
 
       - name: Install frontend dependencies
         working-directory: client/mxhrm-web
