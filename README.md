@@ -10,6 +10,7 @@
 - [Project.md](Project.md) - learning roadmap, architecture, feature progress และ project summary
 - [Docker.md](Docker.md) - Docker Compose, Nginx, healthcheck และ developer container workflow
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Clean Architecture อธิบายฉบับเต็ม พร้อมตัวอย่างและ analogy
+- [DEPLOYMENT.md](DEPLOYMENT.md) - production deployment checklist (pre-deploy / deploy / verify / rollback)
 
 ## โครงสร้างโปรเจกต์
 
@@ -78,6 +79,49 @@ npm start
 ```
 
 Frontend: `http://localhost:4200`
+
+## Build & Deploy
+
+### Build (production)
+
+```bash
+# Frontend — Angular production build (output: dist/mxhrm-web/browser)
+cd client/mxhrm-web && npm ci && npm run build
+
+# Backend — release build (ทั้ง solution)
+dotnet build MXHRM.slnx --configuration Release
+
+# หรือ build เป็น Docker images (API + Angular/Nginx) ทีเดียว
+make app-build
+```
+
+### Run full stack ด้วย Docker (Development)
+
+```bash
+make infra-up   # เฉพาะ infra: SQL Server + Redis + Seq
+make app-up     # build + run ครบทั้ง web / api / infra
+make ps         # เช็คสถานะ container
+```
+
+เปิดที่ `http://localhost:8088` — รายละเอียดทั้งหมดดู [Docker.md](Docker.md)
+
+### Deploy (production-style)
+
+ใช้ image ที่ CI build แล้ว push ขึ้น GitHub Container Registry (GHCR):
+
+```bash
+# 1) เตรียม .env (ตั้ง IMAGE_TAG + secrets จริง — ดู .env.production.example)
+# 2) pull image ตาม IMAGE_TAG แล้วรัน hardened stack (เปิด public เฉพาะ web/nginx)
+make prod-pull
+make prod-up
+```
+
+- **HTTPS/TLS** ที่ edge ด้วย Caddy: เพิ่มไฟล์ override
+  `docker compose -f docker-compose.prod.yml -f docker-compose.prod.tls.yml up -d`
+- **Checklist ก่อน deploy จริง** → [DEPLOYMENT.md](DEPLOYMENT.md)
+- **Image tagging / registry / multi-platform** → [Docker.md](Docker.md)
+
+> CI/CD: push เข้า `main`/`master`/`develop` → GitHub Actions จะ build + test (`dotnet test MXHRM.slnx`) แล้ว push image ขึ้น GHCR อัตโนมัติ
 
 ## หมายเหตุ
 
