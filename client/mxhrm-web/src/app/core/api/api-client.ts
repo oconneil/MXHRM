@@ -1385,6 +1385,74 @@ export class JobsClient implements IJobsClient {
     }
 }
 
+export interface IClient {
+    /**
+     * @return OK
+     */
+    health(): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class Client implements IClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @return OK
+     */
+    health(): Observable<void> {
+        let url_ = this.baseUrl + "/health";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processHealth(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processHealth(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processHealth(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface INotificationsClient {
     /**
      * @param isRead (optional) 
@@ -3321,14 +3389,12 @@ export interface AuthResponse {
 }
 
 export interface CreateEmployeeRequest {
-    companyID?: string | undefined;
     employeeID?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
     email?: string | undefined;
     hireDate?: string;
     salary?: number;
-    createdBy?: string | undefined;
 }
 
 export interface CreateGeneratedReportRequest {
@@ -3432,6 +3498,7 @@ export interface GeneratedReportResponsePagedResponse {
 export interface LoginRequest {
     userName?: string | undefined;
     password?: string | undefined;
+    companyID?: string | undefined;
 }
 
 export interface PermissionResponse {
@@ -3483,7 +3550,6 @@ export interface UpdateEmployeeRequest {
     hireDate?: string;
     salary?: number;
     isActive?: boolean;
-    modifiedBy?: string | undefined;
     rowVersion?: string | undefined;
 }
 

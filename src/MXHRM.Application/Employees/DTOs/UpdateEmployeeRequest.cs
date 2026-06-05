@@ -8,7 +8,6 @@ public class UpdateEmployeeRequest
     public DateTime HireDate { get; set; }
     public decimal Salary { get; set; }
     public bool IsActive { get; set; }
-    public string ModifiedBy { get; set; } = string.Empty;
 
     public byte[] RowVersion { get; set; } = [];
 }

@@ -13,14 +13,12 @@ public class CreateEmployeeRequestValidatorTests
     // แล้วแต่ละเทสต์ค่อยแก้ field เดียวให้ผิด → รู้ชัดว่าพังเพราะ field ไหน
     private static CreateEmployeeRequest ValidRequest() => new()
     {
-        CompanyID = "C001",
         EmployeeID = "E001",
         FirstName = "John",
         LastName = "Doe",
         Email = "john.doe@example.com",
         HireDate = new DateTime(2024, 1, 1),
-        Salary = 50000m,
-        CreatedBy = "admin"
+        Salary = 50000m
     };
 
     [Fact]   // [Fact] = เทสต์ 1 เคส

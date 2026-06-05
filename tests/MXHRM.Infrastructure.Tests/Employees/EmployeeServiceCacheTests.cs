@@ -35,14 +35,12 @@ public class EmployeeServiceCacheTests
 
         var request = new CreateEmployeeRequest
         {
-            CompanyID = "C001",
             EmployeeID = "E001",
             FirstName = "Ann",
             LastName = "A",
             Email = "ann@x.com",
             HireDate = new DateTime(2024, 1, 1),
-            Salary = 50000m,
-            CreatedBy = "admin"
+            Salary = 50000m
         };
 
         // ---------- Act ----------

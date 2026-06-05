@@ -7,10 +7,6 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
 {
     public CreateEmployeeRequestValidator()
     {
-        RuleFor(x => x.CompanyID)
-            .NotEmpty()
-            .MaximumLength(20);
-
         RuleFor(x => x.EmployeeID)
             .NotEmpty()
             .MaximumLength(20);
@@ -33,9 +29,5 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
 
         RuleFor(x => x.Salary)
             .GreaterThanOrEqualTo(0);
-
-        RuleFor(x => x.CreatedBy)
-            .NotEmpty()
-            .MaximumLength(100);
     }
 }

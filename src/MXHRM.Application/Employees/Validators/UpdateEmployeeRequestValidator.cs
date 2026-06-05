@@ -27,10 +27,6 @@ public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRe
         RuleFor(x => x.Salary)
             .GreaterThanOrEqualTo(0);
 
-        RuleFor(x => x.ModifiedBy)
-            .NotEmpty()
-            .MaximumLength(100);
-
         RuleFor(x => x.RowVersion)
             .NotEmpty()
             .WithMessage("RowVersion is required for concurrency check.");

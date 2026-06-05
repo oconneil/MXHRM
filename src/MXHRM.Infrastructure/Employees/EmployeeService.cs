@@ -151,18 +151,13 @@ public class EmployeeService : IEmployeeService
     {
         var employee = new Employee
         {
-            CompanyID = request.CompanyID,
             EmployeeID = request.EmployeeID,
             FirstName = request.FirstName,
             LastName = request.LastName,
             Email = request.Email,
             HireDate = request.HireDate,
             Salary = request.Salary,
-            IsActive = true,
-            CreatedBy = request.CreatedBy,
-            ModifiedBy = request.CreatedBy,
-            CreatedDate = DateTime.UtcNow,
-            ModifiedDate = DateTime.UtcNow
+            IsActive = true
         };
 
         _db.Employees.Add(employee);
@@ -234,8 +229,6 @@ public class EmployeeService : IEmployeeService
         employee.HireDate = request.HireDate;
         employee.Salary = request.Salary;
         employee.IsActive = request.IsActive;
-        employee.ModifiedBy = request.ModifiedBy;
-        employee.ModifiedDate = DateTime.UtcNow;
 
         _db.Entry(employee)
             .Property(x => x.RowVersion)

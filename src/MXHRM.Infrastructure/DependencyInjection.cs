@@ -33,8 +33,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        // interceptor ต้องเป็น scoped เพราะพึ่ง ICurrentUserService + ITenantProvider (scoped ทั้งคู่)
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        services.AddDbContext<AppDbContext>((sp, options) =>
+            options
+                .UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+                .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 
         var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
 
