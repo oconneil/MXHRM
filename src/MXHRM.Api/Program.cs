@@ -46,7 +46,8 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // Register the current user service to access user information in services and controllers
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
+// Register the tenant provider to access the current tenant (company) information
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 // Register the SignalR real-time notifier for sending real-time updates to clients
 builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 
@@ -224,6 +225,8 @@ builder.Services.AddAuthentication(options =>
 
 // Register the custom authorization handler for permissions
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+// Register the custom authorization handler for same-company access control
+builder.Services.AddSingleton<IAuthorizationHandler, SameCompanyAuthorizationHandler>();
 // Register the custom authorization policy provider to dynamically create policies based on permissions
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 // Add authorization services

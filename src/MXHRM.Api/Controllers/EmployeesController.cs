@@ -12,6 +12,7 @@ using MXHRM.Api.Common.Grid;
 using MXHRM.Infrastructure.Common.Grid;
 using MXHRM.Application.Common.Grid;
 using MXHRM.Api.Common;
+using MXHRM.Api.Authorization;
 
 namespace MXHRM.Api.Controllers;
 
@@ -22,13 +23,17 @@ public class EmployeesController : BaseApiController
 {
     private readonly IEmployeeService _employeeService;
     private readonly AppDbContext _db;
+    private readonly IAuthorizationService _authorizationService;
 
     public EmployeesController(
         IEmployeeService employeeService,
-        AppDbContext db)
+        AppDbContext db,
+        IAuthorizationService authorizationService
+        )
     {
         _employeeService = employeeService;
         _db = db;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet]
@@ -47,6 +52,11 @@ public class EmployeesController : BaseApiController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EmployeeResponse>> GetById(string companyId, string employeeId)
     {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
         var employee = await _employeeService.GetByIdAsync(companyId, employeeId);
 
         if (employee is null)
@@ -82,6 +92,11 @@ public class EmployeesController : BaseApiController
     {
         try
         {
+            var sameCompany = await _authorizationService.AuthorizeAsync(
+                User, companyId, new SameCompanyRequirement());
+            if (!sameCompany.Succeeded)
+                return Forbid();
+
             var updated = await _employeeService.UpdateAsync(
                 companyId,
                 employeeId,
@@ -104,6 +119,11 @@ public class EmployeesController : BaseApiController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(string companyId, string employeeId)
     {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
         var deleted = await _employeeService.DeleteAsync(companyId, employeeId);
 
         if (!deleted)

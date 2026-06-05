@@ -1,6 +1,7 @@
 export interface LoginRequest {
   userName: string;
   password: string;
+  companyID: string;
 }
 
 export interface AuthResponse {

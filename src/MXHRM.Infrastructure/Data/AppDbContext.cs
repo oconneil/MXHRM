@@ -7,14 +7,25 @@ using MXHRM.Infrastructure.Identity;
 using MXHRM.Infrastructure.Auditing;
 using MXHRM.Domain.Reports;
 using MXHRM.Domain.Notifications;
+using MXHRM.Domain.Common;
+using MXHRM.Application.Common.Interfaces;
+using System.Reflection;
 
 namespace MXHRM.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private readonly string? _tenantCompanyId;
+    private readonly bool _bypassTenant;
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        ITenantProvider? tenantProvider = null)
         : base(options)
     {
+        _tenantCompanyId = tenantProvider?.CompanyId;
+        // ไม่มี provider (test / seeder / design-time) → bypass = เห็นทุกบริษัท
+        _bypassTenant = tenantProvider?.BypassTenantFilter ?? true;
     }
 
     public DbSet<Employee> Employees => Set<Employee>();
@@ -320,5 +331,26 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .HasDatabaseName("UX_UserNotifications_UserId_Key");
         });
 
+        // === Multi-tenant: ใส่ global query filter (auto WHERE CompanyID) ===
+        // ครอบคลุมทุก entity ที่ derive จาก BaseEntity (ตอนนี้ = Employee, อนาคตเพิ่มก็ครอบเอง)
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                typeof(AppDbContext)
+                    .GetMethod(nameof(ApplyTenantFilter), BindingFlags.Instance | BindingFlags.NonPublic)!
+                    .MakeGenericMethod(entityType.ClrType)
+                    .Invoke(this, new object[] { modelBuilder });
+            }
+        }
+    }
+
+    // generic helper: ทำให้ lambda เป็น strongly-typed (e.CompanyID เข้าถึงได้)
+    // _bypassTenant = true → filter ผ่านหมด (เห็นทุกบริษัท) / false → เฉพาะ tenant
+    private void ApplyTenantFilter<TEntity>(ModelBuilder modelBuilder)
+        where TEntity : BaseEntity
+    {
+        modelBuilder.Entity<TEntity>()
+            .HasQueryFilter(e => _bypassTenant || e.CompanyID == _tenantCompanyId);
     }
 }

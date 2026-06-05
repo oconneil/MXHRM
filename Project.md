@@ -2209,6 +2209,102 @@ Red-Green Debug Cycle
 
 ---
 
+## ✅ Project 12: Resource-based Permission (Same-Company Authorization)
+
+### สิ่งที่ทำ
+
+```text
+สร้าง SameCompanyRequirement (IAuthorizationRequirement)
+สร้าง SameCompanyAuthorizationHandler : AuthorizationHandler<SameCompanyRequirement, string>
+   - Admin role → ผ่าน (cross-company)
+   - มิฉะนั้น company_id claim ต้องตรงกับ companyId ที่ขอ
+ลงทะเบียน handler ใน Program.cs DI
+EmployeesController inject IAuthorizationService + AuthorizeAsync(User, companyId, requirement) → Forbid()
+ใช้กับ GetById / Update / Delete
+เขียน unit test ให้ handler (own company / other company / admin bypass)
+```
+
+### จุดเชื่อมต่อหลัก
+
+```text
+EmployeesController (GetById / Update / Delete)
+   ↓ AuthorizeAsync(User, companyId, SameCompanyRequirement)
+SameCompanyAuthorizationHandler
+   ↓ Admin role? / company_id claim == companyId ที่ขอ?
+Succeed → ทำต่อ | ไม่ผ่าน → 403 Forbidden
+```
+
+### Skill ที่ได้
+
+```text
+Resource-based Authorization (AuthorizationHandler<TReq, TResource>)
+IAuthorizationService.AuthorizeAsync
+Multi-tenant data access control
+Testing authorization handlers ด้วย ClaimsPrincipal ปลอม
+```
+
+### ค้างไว้ (next)
+
+```text
+ทำต่อใน Project 13 (Multi-tenancy / Global Query Filter)
+```
+
+---
+
+## ✅ Project 13: Multi-tenancy (Company Data Isolation)
+
+### สิ่งที่ทำ
+
+```text
+Login ระบุ CompanyID:
+   - non-admin → CompanyID ต้องตรงกับบริษัทของ user (ไม่ตรง = ปฏิเสธ)
+   - admin → เลือกบริษัทไหนก็ได้ (เข้าทำงานในบริษัทนั้น)
+   - company_id claim = effective company → เก็บใน RefreshToken เพื่อ refresh ได้ตรงบริษัท
+ITenantProvider (Application) อ่าน company_id claim + bypass เมื่อไม่มี HttpContext
+TenantProvider (Api) implement จาก IHttpContextAccessor
+EF Core Global Query Filter ใน AppDbContext:
+   - reflection loop ใส่ HasQueryFilter ให้ทุก entity ที่ derive BaseEntity
+   - filter: _bypassTenant || e.CompanyID == _tenantCompanyId
+   - optional constructor (ITenantProvider?) ไม่ให้ test/seeder/design-time พัง
+RefreshToken + CompanyID column + migration
+Seeder: 3 demo users (admin.jcorp=Admin, emp.jamore+emp.jcorp=Employee, password P@ssw0rd)
+        + 7 employees (JAMORE 3 / JCORP 4) แบบ idempotent
+Frontend: เพิ่มช่อง Company ID ในหน้า login (LoginRequest model + reactive form control + html)
+Tests: login-with-company (admin/non-admin) + query filter (scope/bypass)
+```
+
+### Tenant Flow
+
+```text
+Login(CompanyID, UserName, Password)
+   ↓ effective company (non-admin = ตัวเอง / admin = ที่เลือก)
+JWT company_id claim
+   ↓
+ITenantProvider / TenantProvider
+   ↓
+AppDbContext global query filter → auto WHERE CompanyID ทุก query
+   ↓ bypass เฉพาะ job/seeder (ไม่มี HttpContext)
+```
+
+### Skill ที่ได้
+
+```text
+EF Core Global Query Filter (multi-tenancy)
+Reflection-based filter application (DRY, future-proof)
+Dynamic tenant via DbContext instance field
+Tenant-aware login flow + refresh token persistence
+Optional DI constructor เพื่อความเข้ากันได้กับ test
+```
+
+### ค้างไว้
+
+```text
+✅ SameCompanyAuthorizationHandler — เอา admin bypass ออกแล้ว (admin scope ตามบริษัทที่ login)
+⏳ รัน dotnet ef database update เพื่อ apply RefreshToken.CompanyID บน DB จริง (ต้องสตาร์ท Docker SQL ก่อน)
+```
+
+---
+
 # 📊 Current Status
 
 ```text
@@ -2377,7 +2473,7 @@ Junior → Mid-level Full-stack Developer
 # ❗ สิ่งที่ยังขาด (Important)
 
 ```text
-❌ Resource-based Permission
+✅ Resource-based Permission (same-company authorization handler + Admin bypass + unit tests)
 ❌ Permission versioning / token invalidation after permission change
 ❌ Dashboard widgets
 ❌ Audit Report PDF export

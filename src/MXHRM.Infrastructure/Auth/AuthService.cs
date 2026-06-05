@@ -66,7 +66,7 @@ public class AuthService : IAuthService
 
         await _userManager.AddToRoleAsync(user, "Employee");
 
-        return await GenerateAuthResponseAsync(user);
+        return await GenerateAuthResponseAsync(user, user.CompanyID);
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -125,6 +125,31 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid username or password.");
         }
 
+        var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+
+        // non-admin: บริษัทที่ระบุต้องตรงกับบริษัทของ user เอง
+        if (!isAdmin &&
+            !string.Equals(request.CompanyID, user.CompanyID, StringComparison.OrdinalIgnoreCase))
+        {
+            await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
+            {
+                ActivityType = "LoginFailed",
+                Description = "Login failed because company did not match the user.",
+                Metadata = SerializeActivityMetadata(new
+                {
+                    UserId = user.Id,
+                    user.UserName,
+                    RequestedCompanyId = request.CompanyID,
+                    Reason = "CompanyMismatch"
+                })
+            });
+
+            throw new UnauthorizedAccessException("Invalid username, password, or company.");
+        }
+
+        // admin เลือกบริษัทได้ / non-admin = บริษัทตัวเอง
+        var effectiveCompanyId = isAdmin ? request.CompanyID : user.CompanyID;
+
         await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
         {
             ActivityType = "LoginSuccess",
@@ -136,7 +161,7 @@ public class AuthService : IAuthService
             })
         });
 
-        return await GenerateAuthResponseAsync(user);
+        return await GenerateAuthResponseAsync(user, effectiveCompanyId);
     }
 
     public async Task LogoutAsync(RefreshTokenRequest request)
@@ -162,7 +187,7 @@ public class AuthService : IAuthService
         refreshToken.RevokedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        
+
         await _userActivityLogService.LogAsync(new CreateUserActivityLogRequest
         {
             ActivityType = "Logout",
@@ -225,10 +250,10 @@ public class AuthService : IAuthService
 
         refreshToken.RevokedAt = DateTime.UtcNow;
 
-        return await GenerateAuthResponseAsync(user);
+        return await GenerateAuthResponseAsync(user, refreshToken.CompanyID);
     }
 
-    private async Task<AuthResponse> GenerateAuthResponseAsync(ApplicationUser user)
+    private async Task<AuthResponse> GenerateAuthResponseAsync(ApplicationUser user, string companyId)
     {
         var issuer = _configuration["Jwt:Issuer"]!;
         var audience = _configuration["Jwt:Audience"]!;
@@ -241,7 +266,7 @@ public class AuthService : IAuthService
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
-            new("company_id", user.CompanyID),
+            new("company_id", companyId),
             new("display_name", user.DisplayName)
         };
 
@@ -281,7 +306,8 @@ public class AuthService : IAuthService
             UserId = user.Id,
             Token = refreshTokenValue,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(7)
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CompanyID = companyId
         };
 
         _db.RefreshTokens.Add(refreshToken);
@@ -294,7 +320,7 @@ public class AuthService : IAuthService
             ExpiresAt = expiresAt,
             UserName = user.UserName ?? string.Empty,
             DisplayName = user.DisplayName,
-            CompanyID = user.CompanyID,
+            CompanyID = companyId,
             Roles = roles.ToList(),
             Permissions = permissions.ToList()
         };

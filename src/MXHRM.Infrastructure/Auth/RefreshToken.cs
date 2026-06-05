@@ -19,4 +19,5 @@ public class RefreshToken
     public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
 
     public bool IsActive => !IsRevoked && !IsExpired;
+    public string CompanyID { get; set; } = string.Empty;
 }

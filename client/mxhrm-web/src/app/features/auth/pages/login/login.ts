@@ -24,6 +24,7 @@ export class Login {
     private readonly route: ActivatedRoute
   ) {
     this.form = this.fb.nonNullable.group({
+      companyID: ['', [Validators.required]],
       userName: ['', [Validators.required]],
       password: ['', [Validators.required]]
     });
@@ -48,7 +49,7 @@ export class Login {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set('Username หรือ Password ไม่ถูกต้อง');
+        this.errorMessage.set('Company ID, Username หรือ Password ไม่ถูกต้อง');
       }
     });
   }

@@ -268,7 +268,7 @@ The application seeds a default admin user on API startup.
 ```text
 Username: admin
 Password: P@ssw0rd
-CompanyID: JCROP
+CompanyID: JCORP
 Role: Admin
 ```
 
