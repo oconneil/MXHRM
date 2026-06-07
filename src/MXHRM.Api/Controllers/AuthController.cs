@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MXHRM.Application.Auth;
 using MXHRM.Application.Auth.DTOs;
 
@@ -18,6 +19,7 @@ public class AuthController(IAuthService authService) : BaseApiController
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
         var response = await authService.LoginAsync(request);

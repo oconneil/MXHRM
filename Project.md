@@ -2339,6 +2339,31 @@ PropertyEntry.IsModified กัน field ถูกเขียนทับ
 
 ---
 
+## ✅ Project 15: Rate Limiting (Brute-force Protection)
+
+### สิ่งที่ทำ
+
+```text
+เพิ่ม ASP.NET Core built-in rate limiter (AddRateLimiter / UseRateLimiter) — ไม่ต้องลง package
+policy "login": Fixed Window 5 ครั้ง/นาที แยกต่อ IP (partition by RemoteIpAddress)
+[EnableRateLimiting("login")] บน AuthController.Login
+OnRejected → 429 + ErrorResponse contract เดิม + Retry-After header
+เพิ่ม ErrorCodes.TooManyRequests
+Test (WebApplicationFactory): login 6 ครั้ง → ครั้งที่ 6 ได้ 429
+```
+
+### Skill ที่ได้
+
+```text
+ASP.NET Core Rate Limiter (built-in, .NET 7+)
+Fixed Window limiter + partition by IP
+Custom OnRejected response (ตรง error contract) + Retry-After header
+ทำงานร่วม ForwardedHeaders → rate limit ต่อ IP จริงหลัง reverse proxy
+Integration test rate limiting ด้วย WebApplicationFactory
+```
+
+---
+
 # 📊 Current Status
 
 ```text

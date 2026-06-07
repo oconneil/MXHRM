@@ -26,6 +26,8 @@ using MXHRM.Application.Common.Realtime;
 using Microsoft.AspNetCore.SignalR;
 using MXHRM.Api.SignalR;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -246,6 +248,44 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // policy "login": นับต่อ IP, 5 ครั้ง/นาที
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    // ตอบ 429 ด้วย ErrorResponse contract เดิม
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString();
+        }
+
+        var response = new ErrorResponse
+        {
+            StatusCode = StatusCodes.Status429TooManyRequests,
+            Code = ErrorCodes.TooManyRequests,
+            Message = "พยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่",
+            TraceId = context.HttpContext.TraceIdentifier
+        };
+
+        await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);
+    };
+});
+
 var app = builder.Build();
 
 // Enable forwarded headers middleware to process X-Forwarded-For and X-Forwarded-Proto headers
@@ -274,6 +314,8 @@ app.UseCors("AngularDev");
 // Enable authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
+// Enable rate limiting
+app.UseRateLimiter();
 
 // Get the Hangfire dashboard path from configuration, with a default fallback
 var hangfireDashboardPath = builder.Configuration["Hangfire:DashboardPath"] ?? "/hangfire";

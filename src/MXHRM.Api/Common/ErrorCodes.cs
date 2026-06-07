@@ -9,4 +9,5 @@ public static class ErrorCodes
     public const string Conflict = "CONFLICT";
     public const string BadRequest = "BAD_REQUEST";
     public const string InternalServerError = "INTERNAL_SERVER_ERROR";
+    public const string TooManyRequests = "TOO_MANY_REQUESTS";
 }
