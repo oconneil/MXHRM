@@ -28,6 +28,9 @@ using MXHRM.Api.SignalR;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Identity;
+using MXHRM.Infrastructure.Identity;
+using System.Security.Claims;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -186,6 +189,25 @@ builder.Services.AddAuthentication(options =>
                 }
 
                 return Task.CompletedTask;
+            },
+
+            OnTokenValidated = async context =>
+            {
+                var userManager = context.HttpContext.RequestServices
+                    .GetRequiredService<UserManager<ApplicationUser>>();
+
+                var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                          ?? context.Principal?.FindFirst("sub")?.Value;
+                var tokenStamp = context.Principal?.FindFirst("security_stamp")?.Value;
+
+                var user = userId is null ? null : await userManager.FindByIdAsync(userId);
+
+                // token ใช้ไม่ได้ถ้า: user หาย / ถูกปิด / stamp ไม่ตรง (สิทธิ์เปลี่ยนแล้ว)
+                if (user is null || !user.IsActive ||
+                    !string.Equals(user.SecurityStamp, tokenStamp, StringComparison.Ordinal))
+                {
+                    context.Fail("Token is no longer valid.");
+                }
             },
 
             OnChallenge = async context =>

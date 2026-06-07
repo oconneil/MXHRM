@@ -2365,6 +2365,39 @@ Integration test rate limiting ด้วย WebApplicationFactory
 
 ---
 
+## ✅ Project 16: Permission Versioning (Token Invalidation)
+
+### สิ่งที่ทำ
+
+```text
+ใช้ Identity SecurityStamp เป็น "เลขเวอร์ชันสิทธิ์" (ไม่ต้องเพิ่ม column/migration)
+ใส่ claim security_stamp ลง JWT ตอน gen token
+OnTokenValidated (JwtBearerEvents): เช็ค stamp ใน token เทียบ DB + IsActive → ไม่ตรง = context.Fail (401)
+UserService: UpdateRolesAsync + DeactivateAsync → UpdateSecurityStampAsync (bump stamp)
+   → token เก่าของ user คนนั้นใช้ไม่ได้ทันที (ไม่ต้องรอหมดอายุ 15 นาที)
+Test: DeactivateAsync → verify UpdateSecurityStampAsync ถูกเรียก
+```
+
+### Skill ที่ได้
+
+```text
+Identity SecurityStamp pattern (token invalidation)
+JwtBearerEvents.OnTokenValidated (validate per request)
+context.Fail() เพื่อ reject token
+Stateless JWT + server-side revocation (ผ่าน stamp)
+ข้อแลกเปลี่ยน: DB hit ทุก request (optimize ด้วย Redis cache TTL สั้น)
+```
+
+### follow-up
+
+```text
+UpdateRolesAsync bump stamp ของ user คนเดียว — ถ้าเปลี่ยน role-permission (PUT /roles/{id}/permissions)
+ควร bump stamp ของทุก user ในrole นั้นด้วย
+optimize OnTokenValidated ด้วย Redis cache (กัน DB hit ทุก request)
+```
+
+---
+
 # 📊 Current Status
 
 ```text
@@ -2534,7 +2567,7 @@ Junior → Mid-level Full-stack Developer
 
 ```text
 ✅ Resource-based Permission (same-company authorization handler + Admin bypass + unit tests)
-❌ Permission versioning / token invalidation after permission change
+✅ Permission versioning / token invalidation (SecurityStamp + OnTokenValidated — Project 16)
 ❌ Dashboard widgets
 ❌ Audit Report PDF export
 ✅ Project 10.4 production hardening (complete — all 10 steps)

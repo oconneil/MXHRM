@@ -262,12 +262,15 @@ public class AuthService : IAuthService
 
         var expiresAt = DateTime.UtcNow.AddMinutes(accessTokenMinutes);
 
+        var securityStamp = await _userManager.GetSecurityStampAsync(user);
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
             new("company_id", companyId),
-            new("display_name", user.DisplayName)
+            new("display_name", user.DisplayName),
+            new("security_stamp", securityStamp ?? string.Empty)
         };
 
         var roles = await _userManager.GetRolesAsync(user);

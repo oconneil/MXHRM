@@ -127,9 +127,15 @@ public class UserService(
         var newRoleNames = requestedRoles.Select(x => x.Name!).ToList();
         var addResult = await userManager.AddToRolesAsync(user, newRoleNames);
 
-        return addResult.Succeeded
-            ? OperationResult.Success()
-            : OperationResult.Failure(OperationErrorType.Validation, "Failed to update user roles.", addResult.Errors);
+        if (!addResult.Succeeded)
+        {
+            return OperationResult.Failure(OperationErrorType.Validation, "Failed to update user roles.", addResult.Errors);
+        }
+
+        // เปลี่ยน role → bump stamp → token เก่าของ user คนนี้ใช้ไม่ได้ทันที
+        await userManager.UpdateSecurityStampAsync(user);
+
+        return OperationResult.Success();
     }
 
     public async Task<OperationResult> ActivateAsync(string id)
@@ -165,8 +171,13 @@ public class UserService(
         user.IsActive = false;
         var result = await userManager.UpdateAsync(user);
 
-        return result.Succeeded
-            ? OperationResult.Success()
-            : OperationResult.Failure(OperationErrorType.Validation, "Failed to deactivate user.", result.Errors);
+        if (!result.Succeeded)
+        {
+            return OperationResult.Failure(OperationErrorType.Validation, "Failed to deactivate user.", result.Errors);
+        }
+
+        await userManager.UpdateSecurityStampAsync(user);
+
+        return OperationResult.Success();
     }
 }
