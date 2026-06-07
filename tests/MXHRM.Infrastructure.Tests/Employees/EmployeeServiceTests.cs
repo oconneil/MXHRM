@@ -39,7 +39,8 @@ public class EmployeeServiceTests
             logger: NullLogger<EmployeeService>.Instance, // logger เปล่าๆ ไม่ทำอะไร
             cache: cache.Object,                         // เอาตัวปลอมเข้าฉาก
             configuration: null!,                        // ไม่ถูกใช้ใน path นี้
-            auditLogService: null!);                     // อ่านข้อมูลไม่ต้อง audit
+            auditLogService: null!,                      // อ่านข้อมูลไม่ต้อง audit
+            tenant: Mock.Of<ITenantProvider>());
 
         // ---------- Act ----------
         var result = await sut.GetAllAsync(new GetEmployeesRequest());

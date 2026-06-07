@@ -21,20 +21,27 @@ public class EmployeeService : IEmployeeService
     private readonly ICacheService _cache;
     private readonly IConfiguration _configuration;
     private readonly IAuditLogService _auditLogService;
+    private readonly ITenantProvider _tenant;
 
     public EmployeeService(
     AppDbContext db,
     ILogger<EmployeeService> logger,
     ICacheService cache,
     IConfiguration configuration,
-    IAuditLogService auditLogService)
+    IAuditLogService auditLogService,
+    ITenantProvider tenant)
     {
         _db = db;
         _logger = logger;
         _cache = cache;
         _configuration = configuration;
         _auditLogService = auditLogService;
+        _tenant = tenant;
     }
+
+    // tenant segment สำหรับ cache key — กันข้อมูลรั่วข้ามบริษัทผ่าน cache
+    private string TenantKey =>
+        _tenant.BypassTenantFilter ? "__all__" : (_tenant.CompanyId ?? "none");
 
     private static readonly JsonSerializerOptions AuditJsonOptions = new()
     {
@@ -324,7 +331,7 @@ public class EmployeeService : IEmployeeService
         return true;
     }
 
-    private static string GetEmployeeListCacheKey(GetEmployeesRequest request)
+    private string GetEmployeeListCacheKey(GetEmployeesRequest request)
     {
         var search = string.IsNullOrWhiteSpace(request.Search)
             ? "all"
@@ -346,12 +353,12 @@ public class EmployeeService : IEmployeeService
             ? "asc"
             : request.SortDirection.Trim().ToLowerInvariant();
 
-        return $"employees:list:company={companyId}:active={isActive}:page={request.Page}:size={request.PageSize}:search={search}:sort={sortBy}:direction={sortDirection}";
+        return $"employees:list:tenant={TenantKey}:company={companyId}:active={isActive}:page={request.Page}:size={request.PageSize}:search={search}:sort={sortBy}:direction={sortDirection}";
     }
 
-    private static string GetEmployeeDetailCacheKey(string companyId, string employeeId)
+    private string GetEmployeeDetailCacheKey(string companyId, string employeeId)
     {
-        return $"employees:detail:company={companyId}:employee={employeeId}";
+        return $"employees:detail:tenant={TenantKey}:company={companyId}:employee={employeeId}";
     }
 
     private const string EmployeeListCachePrefix = "employees:list:";

@@ -2271,6 +2271,7 @@ Seeder: 3 demo users (admin.jcorp=Admin, emp.jamore+emp.jcorp=Employee, password
         + 7 employees (JAMORE 3 / JCORP 4) แบบ idempotent
 Frontend: เพิ่มช่อง Company ID ในหน้า login (LoginRequest model + reactive form control + html)
 Tests: login-with-company (admin/non-admin) + query filter (scope/bypass)
+Cache key + tenant: EmployeeService cache key รวม tenant (กัน cache leak ข้ามบริษัท — เจอตอน verify จริง)
 ```
 
 ### Tenant Flow

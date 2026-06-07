@@ -31,7 +31,8 @@ public class EmployeeServiceCacheTests
             NullLogger<EmployeeService>.Instance,
             cache.Object,
             new ConfigurationBuilder().Build(),
-            Mock.Of<IAuditLogService>());        // audit ปลอม (LogAsync คืน Task ว่างให้เอง)
+            Mock.Of<IAuditLogService>(),         // audit ปลอม (LogAsync คืน Task ว่างให้เอง)
+            Mock.Of<ITenantProvider>());
 
         var request = new CreateEmployeeRequest
         {
@@ -80,7 +81,8 @@ public class EmployeeServiceCacheTests
             NullLogger<EmployeeService>.Instance,
             cache.Object,
             new ConfigurationBuilder().Build(),
-            Mock.Of<IAuditLogService>());
+            Mock.Of<IAuditLogService>(),
+            Mock.Of<ITenantProvider>());
 
         // Act
         await sut.DeleteAsync("C001", "E001");

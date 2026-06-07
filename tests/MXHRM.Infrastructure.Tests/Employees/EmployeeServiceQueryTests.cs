@@ -62,7 +62,8 @@ public class EmployeeServiceQueryTests
             NullLogger<EmployeeService>.Instance,
             cache.Object,
             new ConfigurationBuilder().Build(),          // config ว่าง → ใช้ค่า default
-            Mock.Of<IAuditLogService>());
+            Mock.Of<IAuditLogService>(),
+            Mock.Of<ITenantProvider>());
 
         // ---------- Act ----------
         var result = await sut.GetAllAsync(new GetEmployeesRequest { Page = 1, PageSize = 10 });
@@ -77,5 +78,36 @@ public class EmployeeServiceQueryTests
             It.IsAny<PagedResponse<EmployeeResponse>>(),
             It.IsAny<TimeSpan?>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_cache_key_should_include_tenant()
+    {
+        // regression: cache key ต้องมี tenant — กัน cache leak ข้ามบริษัท
+        await using var db = CreateInMemoryDb();   // ว่าง → cache miss → จับ key ที่ใช้
+
+        var cache = new Mock<ICacheService>();
+        string? capturedKey = null;
+        cache
+            .Setup(c => c.GetAsync<PagedResponse<EmployeeResponse>>(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((key, _) => capturedKey = key)
+            .ReturnsAsync((PagedResponse<EmployeeResponse>?)null);
+
+        var tenant = Mock.Of<ITenantProvider>(t =>
+            t.CompanyId == "JAMORE" && t.BypassTenantFilter == false);
+
+        var sut = new EmployeeService(
+            db,
+            NullLogger<EmployeeService>.Instance,
+            cache.Object,
+            new ConfigurationBuilder().Build(),
+            Mock.Of<IAuditLogService>(),
+            tenant);
+
+        await sut.GetAllAsync(new GetEmployeesRequest());
+
+        Assert.NotNull(capturedKey);
+        Assert.Contains("tenant=JAMORE", capturedKey);   // ไม่มี tenant = bug กลับมา
     }
 }
