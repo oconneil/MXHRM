@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Moq;
 using MXHRM.Infrastructure.Identity;
 using MXHRM.Infrastructure.Users;
+using MXHRM.Application.Common.Interfaces;
+using MXHRM.Infrastructure.Auth;
 using Xunit;
 
 namespace MXHRM.Infrastructure.Tests.Users;
@@ -27,10 +29,14 @@ public class UserServiceSecurityStampTests
         userManager.Setup(m => m.UpdateSecurityStampAsync(user)).ReturnsAsync(IdentityResult.Success);
 
         // roleManager + db ไม่ถูกใช้ใน DeactivateAsync → null! ปลอดภัย
-        var sut = new UserService(userManager.Object, null!, null!);
+        var cache = new Mock<ICacheService>();
+        var sut = new UserService(userManager.Object, null!, null!, cache.Object);
 
         // Act — admin deactivate user คนอื่น
         var result = await sut.DeactivateAsync("u-1", currentUserId: "admin");
+
+        cache.Verify(c => c.RemoveAsync(
+            AuthCacheKeys.UserSecurity("u-1"), It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert — สำเร็จ + stamp ถูก bump → token เก่าของ user คนนี้ใช้ไม่ได้ทันที
         Assert.True(result.Succeeded);

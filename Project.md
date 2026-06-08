@@ -2388,12 +2388,31 @@ Stateless JWT + server-side revocation (ผ่าน stamp)
 ข้อแลกเปลี่ยน: DB hit ทุก request (optimize ด้วย Redis cache TTL สั้น)
 ```
 
+### Project 16.1: Optimize OnTokenValidated ด้วย Redis cache ✅
+
+```text
+ปัญหา: OnTokenValidated ยิง FindByIdAsync ทุก request = DB hit ต่อทุก authenticated request
+แก้: Read-through cache + Explicit invalidation + TTL safety net
+  - UserSecuritySnapshot(SecurityStamp, IsActive) เก็บใน Redis ผ่าน ICacheService
+  - AuthCacheKeys.UserSecurity(userId) → key กลางใช้ทั้งฝั่งอ่าน (Program.cs) และฝั่งลบ (UserService)
+  - cache hit → ไม่แตะ DB เลย; cache miss → โหลด DB ครั้งเดียว set TTL 5 นาที
+  - invalidate (cache.RemoveAsync) 3 จุด: UpdateRolesAsync, DeactivateAsync, ActivateAsync
+    (Activate cache เพราะ cache เก็บ IsActive ด้วย)
+TTL 5 นาที = safety net ถ้าลืม invalidate ที่ไหน key ก็ตายเอง (bound ช่องโหว่)
+test: UserServiceSecurityStampTests เพิ่ม Verify cache.RemoveAsync Times.Once
+```
+
+ไฟล์: src/MXHRM.Infrastructure/Auth/UserSecuritySnapshot.cs (ใหม่), Program.cs (OnTokenValidated),
+UserService.cs (+ICacheService ctor + 3 RemoveAsync)
+
+ทักษะใหม่: read-through cache pattern, cache invalidation strategy, TTL as safety net,
+แยก concern อ่าน DB เฉพาะ cache miss
+
 ### follow-up
 
 ```text
 UpdateRolesAsync bump stamp ของ user คนเดียว — ถ้าเปลี่ยน role-permission (PUT /roles/{id}/permissions)
-ควร bump stamp ของทุก user ในrole นั้นด้วย
-optimize OnTokenValidated ด้วย Redis cache (กัน DB hit ทุก request)
+ควร bump stamp ของทุก user ในrole นั้นด้วย (+ ลบ cache ของทุก user ในrole)
 ```
 
 ---

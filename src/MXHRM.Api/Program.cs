@@ -31,6 +31,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using MXHRM.Infrastructure.Identity;
 using System.Security.Claims;
+using MXHRM.Infrastructure.Auth;
 
 // Create the WebApplication builder
 var builder = WebApplication.CreateBuilder(args);
@@ -193,18 +194,42 @@ builder.Services.AddAuthentication(options =>
 
             OnTokenValidated = async context =>
             {
-                var userManager = context.HttpContext.RequestServices
-                    .GetRequiredService<UserManager<ApplicationUser>>();
+                var cache = context.HttpContext.RequestServices
+                    .GetRequiredService<ICacheService>();
 
                 var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
                           ?? context.Principal?.FindFirst("sub")?.Value;
                 var tokenStamp = context.Principal?.FindFirst("security_stamp")?.Value;
 
-                var user = userId is null ? null : await userManager.FindByIdAsync(userId);
+                if (userId is null)
+                {
+                    context.Fail("Token is no longer valid.");
+                    return;
+                }
 
-                // token ใช้ไม่ได้ถ้า: user หาย / ถูกปิด / stamp ไม่ตรง (สิทธิ์เปลี่ยนแล้ว)
-                if (user is null || !user.IsActive ||
-                    !string.Equals(user.SecurityStamp, tokenStamp, StringComparison.Ordinal))
+                var cacheKey = AuthCacheKeys.UserSecurity(userId);
+                var snapshot = await cache.GetAsync<UserSecuritySnapshot>(cacheKey);
+
+                if (snapshot is null)
+                {
+                    // cache miss → โหลด DB ครั้งเดียว แล้วเก็บลง Redis (TTL 5 นาที = safety net)
+                    var userManager = context.HttpContext.RequestServices
+                        .GetRequiredService<UserManager<ApplicationUser>>();
+                    var user = await userManager.FindByIdAsync(userId);
+
+                    if (user is null)
+                    {
+                        context.Fail("Token is no longer valid.");
+                        return;
+                    }
+
+                    snapshot = new UserSecuritySnapshot(user.SecurityStamp ?? string.Empty, user.IsActive);
+                    await cache.SetAsync(cacheKey, snapshot, TimeSpan.FromMinutes(5));
+                }
+
+                // token ใช้ไม่ได้ถ้า: user ถูกปิด / stamp ไม่ตรง (สิทธิ์เปลี่ยนแล้ว)
+                if (!snapshot.IsActive ||
+                    !string.Equals(snapshot.SecurityStamp, tokenStamp, StringComparison.Ordinal))
                 {
                     context.Fail("Token is no longer valid.");
                 }

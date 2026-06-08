@@ -7,13 +7,16 @@ using MXHRM.Application.Users;
 using MXHRM.Application.Users.DTOs;
 using MXHRM.Infrastructure.Data;
 using MXHRM.Infrastructure.Identity;
+using MXHRM.Application.Common.Interfaces;
+using MXHRM.Infrastructure.Auth;
 
 namespace MXHRM.Infrastructure.Users;
 
 public class UserService(
     UserManager<ApplicationUser> userManager,
     RoleManager<IdentityRole> roleManager,
-    AppDbContext db) : IUserService
+    AppDbContext db,
+    ICacheService cache) : IUserService
 {
     public async Task<List<UserResponse>> GetAllAsync()
     {
@@ -134,6 +137,7 @@ public class UserService(
 
         // เปลี่ยน role → bump stamp → token เก่าของ user คนนี้ใช้ไม่ได้ทันที
         await userManager.UpdateSecurityStampAsync(user);
+        await cache.RemoveAsync(AuthCacheKeys.UserSecurity(user.Id));
 
         return OperationResult.Success();
     }
@@ -148,6 +152,7 @@ public class UserService(
 
         user.IsActive = true;
         var result = await userManager.UpdateAsync(user);
+        await cache.RemoveAsync(AuthCacheKeys.UserSecurity(user.Id));
 
         return result.Succeeded
             ? OperationResult.Success()
@@ -177,6 +182,7 @@ public class UserService(
         }
 
         await userManager.UpdateSecurityStampAsync(user);
+        await cache.RemoveAsync(AuthCacheKeys.UserSecurity(user.Id));
 
         return OperationResult.Success();
     }
