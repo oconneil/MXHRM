@@ -2444,6 +2444,41 @@ integration test ยังต้องมี SQL ทำงาน (make infra-up)
   (ถ้าจะรันใน CI: ใช้ Testcontainers.MsSql หรือ service container ใน GitHub Actions)
 ```
 
+## ✅ Project 18: File Upload (รูปโปรไฟล์ + เอกสารพนักงาน)
+
+```text
+Foundation (ใช้ร่วม 2 แบบ): IFileStorage (Application) + LocalFileStorage (Infrastructure)
+  - SaveAsync/OpenReadAsync/DeleteAsync; storage key = path สัมพัทธ์เก็บใน DB
+  - ความปลอดภัย: ตั้งชื่อใหม่ด้วย Guid (กันชนกัน+กันชื่อมุ่งร้าย), แยกโฟลเดอร์ตาม tenant,
+    ResolveSafePath กัน path traversal (resolve แล้วต้องอยู่ใต้ _root), validate ขนาด+นามสกุล+content-type
+  - config FileStorage:RootPath (default App_Data/uploads, .gitignore แล้ว); DI Singleton
+
+Phase 2 — รูปโปรไฟล์ (single): Employee.PhotoPath (migration AddEmployeePhotoPath) +
+  EmployeeResponse.PhotoPath. แยก service ใหม่ IEmployeeFileService/EmployeeFileService
+  (ไม่ยัดใน EmployeeService → SRP + ไม่พัง test เดิม). endpoints ใน EmployeesController:
+  POST/GET/DELETE {companyId}/{employeeId}/photo. ลบรูปเก่าก่อนเซฟใหม่ (กัน orphan files).
+  GET คืน File(stream, contentType) แสดง inline. ล้าง employee cache เมื่อเปลี่ยนรูป.
+
+Phase 3 — เอกสาร (1-to-many): EmployeeDocument : BaseEntity (Id Guid PK ผ่าน HasKey override
+  [Key] ของ CompanyID; FK composite → Employee cascade; ได้ tenant filter + audit อัตโนมัติ).
+  migration AddEmployeeDocuments. AddDocument/List/Get/Delete. endpoints documents[/{guid}].
+  upload→201 CreatedAtAction; download→File(stream,ct,fileName)=attachment ชื่อเดิม.
+
+verify e2e จริง (curl): photo upload/download byte-perfect + validation 400;
+  document upload→201 (uploadedBy=admin.jcorp = audit interceptor stamp), list, download
+  (Content-Disposition attachment), reject .exe→400, delete→204→list ว่าง. 31 tests เขียว.
+บทเรียน: "build ผ่าน ≠ โค้ดครบ" — endpoint ที่ลืมใส่ไม่ทำให้ build พัง เจอตอนเทสต์จริง (404) แล้ว grep=0
+```
+
+### follow-up
+
+```text
+ยังไม่มี unit/integration test สำหรับ file upload (LocalFileStorage path-traversal, service)
+production: App_Data ต้องเป็น writable volume (prod container read_only + tmpfs) — ปรับ compose ตอน deploy
+frontend: ยังไม่มี UI อัปโหลดรูป/เอกสาร (NSwag regen + component)
+hardening เพิ่มเติม: magic-byte sniffing, virus scan, signed URL สำหรับ download
+```
+
 ---
 
 # 📊 Current Status

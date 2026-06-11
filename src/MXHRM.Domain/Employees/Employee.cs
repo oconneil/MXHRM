@@ -23,4 +23,7 @@ public class Employee : BaseEntity
     public decimal Salary { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    [MaxLength(300)]
+    public string? PhotoPath { get; set; }
 }

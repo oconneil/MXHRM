@@ -38,3 +38,6 @@ client/mxhrm-web/.eslintcache
 # Local runtime data
 seq-data/Logs/
 
+# File storage (if using local storage)
+App_Data/
+

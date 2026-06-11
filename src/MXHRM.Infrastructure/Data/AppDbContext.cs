@@ -36,7 +36,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
     public DbSet<GeneratedReport> GeneratedReports => Set<GeneratedReport>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
-
+    public DbSet<EmployeeDocument> EmployeeDocuments => Set<EmployeeDocument>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -329,6 +329,29 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .IsUnique()
                 .HasFilter("[Key] IS NOT NULL")
                 .HasDatabaseName("UX_UserNotifications_UserId_Key");
+        });
+
+        modelBuilder.Entity<EmployeeDocument>(entity =>
+        {
+            entity.ToTable("EmployeeDocuments");
+
+            entity.HasKey(e => e.Id);   // override [Key] บน CompanyID ที่ติดมาจาก BaseEntity
+
+            entity.Property(e => e.RowVersion).IsRowVersion();
+            entity.Property(e => e.EmployeeID).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.StoragePath).IsRequired().HasMaxLength(400);
+            entity.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DocumentType).HasMaxLength(50);
+
+            // FK ไป Employee (composite key) → ลบพนักงาน = ลบเอกสารตาม (cascade)
+            entity.HasOne<Employee>()
+                .WithMany()
+                .HasForeignKey(e => new { e.CompanyID, e.EmployeeID })
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.CompanyID, e.EmployeeID })
+                .HasDatabaseName("IX_EmployeeDocuments_CompanyID_EmployeeID");
         });
 
         // === Multi-tenant: ใส่ global query filter (auto WHERE CompanyID) ===

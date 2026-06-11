@@ -318,7 +318,7 @@ public class EmployeeService : IEmployeeService
                 nameof(Employee.IsActive)
             })
         });
-        
+
         await ClearEmployeeCacheAsync(companyId, employeeId);
 
         _logger.LogInformation
@@ -389,6 +389,7 @@ public class EmployeeService : IEmployeeService
             HireDate = employee.HireDate,
             Salary = employee.Salary,
             IsActive = employee.IsActive,
+            PhotoPath = employee.PhotoPath,
             RowVersion = employee.RowVersion
         };
     }
@@ -407,6 +408,7 @@ public class EmployeeService : IEmployeeService
             HireDate = x.HireDate,
             Salary = x.Salary,
             IsActive = x.IsActive,
+            PhotoPath = x.PhotoPath,
             RowVersion = x.RowVersion
         });
     }

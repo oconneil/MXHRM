@@ -26,6 +26,7 @@ using MXHRM.Application.Reports;
 using MXHRM.Infrastructure.Reports;
 using MXHRM.Application.Notifications;
 using MXHRM.Infrastructure.Notifications;
+using MXHRM.Infrastructure.Storage;
 
 namespace MXHRM.Infrastructure;
 
@@ -86,6 +87,7 @@ public static class DependencyInjection
             return ConnectionMultiplexer.Connect(redisConnectionString);
         });
 
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
@@ -103,6 +105,7 @@ public static class DependencyInjection
 
         // Register application services
         services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IEmployeeFileService, EmployeeFileService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IRoleService, RoleService>();

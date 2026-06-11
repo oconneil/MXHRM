@@ -24,16 +24,19 @@ public class EmployeesController : BaseApiController
     private readonly IEmployeeService _employeeService;
     private readonly AppDbContext _db;
     private readonly IAuthorizationService _authorizationService;
+    private readonly IEmployeeFileService _employeeFileService;
 
     public EmployeesController(
         IEmployeeService employeeService,
         AppDbContext db,
-        IAuthorizationService authorizationService
+        IAuthorizationService authorizationService,
+        IEmployeeFileService employeeFileService
         )
     {
         _employeeService = employeeService;
         _db = db;
         _authorizationService = authorizationService;
+        _employeeFileService = employeeFileService;
     }
 
     [HttpGet]
@@ -168,5 +171,149 @@ public class EmployeesController : BaseApiController
     public IActionResult TestError()
     {
         throw new Exception("This is a test exception.");
+    }
+
+    [HttpPost("{companyId}/{employeeId}/photo")]
+    [Authorize(Policy = Permissions.Employee.Update)]
+    [RequestSizeLimit(3 * 1024 * 1024)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadPhoto(string companyId, string employeeId, IFormFile file)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var error = FileUploadValidation.ValidateImage(file);
+        if (error is not null)
+            return BadRequestError(error);
+
+        await using var stream = file.OpenReadStream();
+        var key = await _employeeFileService.SetPhotoAsync(companyId, employeeId, stream, file.FileName);
+
+        if (key is null)
+            return NotFoundError("Employee not found.");
+
+        return Ok(new { photoPath = key });
+    }
+
+    [HttpGet("{companyId}/{employeeId}/photo")]
+    [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPhoto(string companyId, string employeeId)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var photo = await _employeeFileService.GetPhotoAsync(companyId, employeeId);
+        if (photo is null)
+            return NotFound();
+
+        // ส่ง stream กลับให้ browser แสดง inline (ไม่โหลดทั้งไฟล์เข้า memory)
+        return File(photo.Content, photo.ContentType);
+    }
+
+    [HttpDelete("{companyId}/{employeeId}/photo")]
+    [Authorize(Policy = Permissions.Employee.Update)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePhoto(string companyId, string employeeId)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var deleted = await _employeeFileService.DeletePhotoAsync(companyId, employeeId);
+        if (!deleted)
+            return NotFoundError("Employee not found.");
+
+        return NoContent();
+    }
+
+    [HttpPost("{companyId}/{employeeId}/documents")]
+    [Authorize(Policy = Permissions.Employee.Update)]
+    [RequestSizeLimit(11 * 1024 * 1024)]
+    [ProducesResponseType(typeof(EmployeeDocumentResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadDocument(
+    string companyId, string employeeId, IFormFile file, [FromForm] string documentType)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var error = FileUploadValidation.ValidateDocument(file);
+        if (error is not null)
+            return BadRequestError(error);
+
+        await using var stream = file.OpenReadStream();
+        var doc = await _employeeFileService.AddDocumentAsync(
+            companyId, employeeId, stream, file.FileName, file.ContentType, file.Length, documentType ?? string.Empty);
+
+        if (doc is null)
+            return NotFoundError("Employee not found.");
+
+        return CreatedAtAction(
+            nameof(GetDocument),
+            new { companyId, employeeId, documentId = doc.Id },
+            doc);
+    }
+
+    [HttpGet("{companyId}/{employeeId}/documents")]
+    [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesResponseType(typeof(IReadOnlyList<EmployeeDocumentResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListDocuments(string companyId, string employeeId)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var docs = await _employeeFileService.ListDocumentsAsync(companyId, employeeId);
+        return Ok(docs);
+    }
+
+    [HttpGet("{companyId}/{employeeId}/documents/{documentId:guid}")]
+    [Authorize(Policy = Permissions.Employee.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDocument(string companyId, string employeeId, Guid documentId)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var doc = await _employeeFileService.GetDocumentAsync(companyId, employeeId, documentId);
+        if (doc is null)
+            return NotFound();
+
+        return File(doc.Content, doc.ContentType, doc.FileName);
+    }
+
+    [HttpDelete("{companyId}/{employeeId}/documents/{documentId:guid}")]
+    [Authorize(Policy = Permissions.Employee.Update)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteDocument(string companyId, string employeeId, Guid documentId)
+    {
+        var sameCompany = await _authorizationService.AuthorizeAsync(
+            User, companyId, new SameCompanyRequirement());
+        if (!sameCompany.Succeeded)
+            return Forbid();
+
+        var deleted = await _employeeFileService.DeleteDocumentAsync(companyId, employeeId, documentId);
+        if (!deleted)
+            return NotFoundError("Document not found.");
+
+        return NoContent();
     }
 }
