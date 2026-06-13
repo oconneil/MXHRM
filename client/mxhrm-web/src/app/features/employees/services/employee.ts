@@ -15,7 +15,8 @@ import {
   EmployeeResponse,
   GetEmployeesRequest,
   PagedResponse,
-  UpdateEmployeeRequest
+  UpdateEmployeeRequest,
+  EmployeeDocument
 } from '../models/employee';
 
 @Injectable({
@@ -85,6 +86,69 @@ export class EmployeeService {
     employeeID: string
   ): Observable<void> {
     return this.employeesClient.delete(companyID, employeeID);
+  }
+
+  uploadPhoto(
+    companyID: string,
+    employeeID: string,
+    file: File
+  ): Observable<{ photoPath: string }> {
+    const formData = new FormData();
+    formData.append('file', file);   // ชื่อ field ต้องตรงกับ param 'file' ใน controller
+
+    return this.http.post<{ photoPath: string }>(
+      `${this.apiUrl}/${companyID}/${employeeID}/photo`,
+      formData
+    );
+  }
+
+  getPhotoBlob(companyID: string, employeeID: string): Observable<Blob> {
+    // ดึงผ่าน HttpClient → interceptor แนบ token ให้ (img src ธรรมดาทำไม่ได้)
+    return this.http.get(
+      `${this.apiUrl}/${companyID}/${employeeID}/photo`,
+      { responseType: 'blob' }
+    );
+  }
+
+  deletePhoto(companyID: string, employeeID: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/${companyID}/${employeeID}/photo`
+    );
+  }
+
+  listDocuments(companyID: string, employeeID: string): Observable<EmployeeDocument[]> {
+    return this.http.get<EmployeeDocument[]>(
+      `${this.apiUrl}/${companyID}/${employeeID}/documents`
+    );
+  }
+
+  uploadDocument(
+    companyID: string,
+    employeeID: string,
+    file: File,
+    documentType: string
+  ): Observable<EmployeeDocument> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);   // field ตรงกับ [FromForm] string documentType
+
+    return this.http.post<EmployeeDocument>(
+      `${this.apiUrl}/${companyID}/${employeeID}/documents`,
+      formData
+    );
+  }
+
+  downloadDocument(companyID: string, employeeID: string, documentId: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/${companyID}/${employeeID}/documents/${documentId}`,
+      { responseType: 'blob' }
+    );
+  }
+
+  deleteDocument(companyID: string, employeeID: string, documentId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/${companyID}/${employeeID}/documents/${documentId}`
+    );
   }
 
   getEmployeesGrid(state: State): Observable<GridDataResult> {

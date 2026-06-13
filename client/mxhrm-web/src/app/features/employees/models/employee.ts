@@ -52,3 +52,13 @@ export interface PagedResponse<T> {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
 }
+
+export interface EmployeeDocument {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  documentType: string;
+  uploadedAt: string;
+  uploadedBy: string;
+}

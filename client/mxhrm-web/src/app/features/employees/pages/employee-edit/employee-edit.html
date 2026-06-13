@@ -7,121 +7,207 @@
 </div>
 
 @if (loading()) {
-  <div class="alert alert-info">Loading...</div>
+<div class="alert alert-info">Loading...</div>
 }
 
 @if (errorMessage()) {
-  <div class="alert alert-danger">{{ errorMessage() }}</div>
+<div class="alert alert-danger">{{ errorMessage() }}</div>
 }
 
 @if (!loading()) {
-  <div class="card">
-    <div class="card-body">
-      <form [formGroup]="form" (ngSubmit)="save()">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Company ID</label>
-            <input class="form-control" type="text" [value]="companyID" disabled />
-          </div>
+<div class="card">
+  <div class="card-body">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label d-block">Photo</label>
+          <div class="d-flex align-items-center gap-3">
+            @if (photoUrl()) {
+            <img [src]="photoUrl()" alt="Employee photo" class="rounded border"
+              style="width:96px;height:96px;object-fit:cover;" />
+            } @else {
+            <div class="rounded border d-flex align-items-center justify-content-center bg-light text-muted"
+              style="width:96px;height:96px;">No photo</div>
+            }
 
-          <div class="col-md-6">
-            <label class="form-label">Employee ID</label>
-            <input class="form-control" type="text" [value]="employeeID" disabled />
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">First Name</label>
-            <input class="form-control" type="text" formControlName="firstName" />
-            @if (hasError('firstName')) {
-              <div class="text-danger small">First name is required.</div>
-            }
-            @for (message of fieldErrors('firstName'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Last Name</label>
-            <input class="form-control" type="text" formControlName="lastName" />
-            @if (hasError('lastName')) {
-              <div class="text-danger small">Last name is required.</div>
-            }
-            @for (message of fieldErrors('lastName'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Email</label>
-            <input class="form-control" type="email" formControlName="email" />
-            @if (hasError('email')) {
-              <div class="text-danger small">Valid email is required.</div>
-            }
-            @for (message of fieldErrors('email'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Hire Date</label>
-            <input class="form-control" type="date" formControlName="hireDate" />
-            @if (hasError('hireDate')) {
-              <div class="text-danger small">Hire date is required.</div>
-            }
-            @for (message of fieldErrors('hireDate'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Salary</label>
-            <input class="form-control" type="number" formControlName="salary" />
-            @if (hasError('salary')) {
-              <div class="text-danger small">Salary must be 0 or more.</div>
-            }
-            @for (message of fieldErrors('salary'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
-          </div>
-
-          <div class="col-md-6 d-flex align-items-end">
-            <div class="form-check">
-              <input
-                id="isActive"
-                class="form-check-input"
-                type="checkbox"
-                formControlName="isActive"
-              />
-              <label class="form-check-label" for="isActive">
-                Active
-              </label>
+            <div>
+              <input type="file" class="form-control" accept="image/jpeg,image/png,image/webp"
+                (change)="onPhotoSelected($event)" [disabled]="uploadingPhoto()" />
+              <div class="mt-2 d-flex gap-2 align-items-center">
+                @if (uploadingPhoto()) {
+                <span class="text-muted small">Uploading...</span>
+                }
+                @if (photoUrl()) {
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removePhoto()"
+                  [disabled]="uploadingPhoto()">
+                  Remove
+                </button>
+                }
+              </div>
+              @if (photoMessage()) {
+              <div class="text-danger small mt-1">{{ photoMessage() }}</div>
+              }
             </div>
           </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Company ID</label>
+          <input class="form-control" type="text" [value]="companyID" disabled />
+        </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Modified By</label>
-            <input class="form-control" type="text" formControlName="modifiedBy" />
-            @if (hasError('modifiedBy')) {
-              <div class="text-danger small">Modified by is required.</div>
-            }
-            @for (message of fieldErrors('modifiedBy'); track message) {
-              <div class="text-danger small mt-1">{{ message }}</div>
-            }
+        <div class="col-md-6">
+          <label class="form-label">Employee ID</label>
+          <input class="form-control" type="text" [value]="employeeID" disabled />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input class="form-control" type="text" formControlName="firstName" />
+          @if (hasError('firstName')) {
+          <div class="text-danger small">First name is required.</div>
+          }
+          @for (message of fieldErrors('firstName'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input class="form-control" type="text" formControlName="lastName" />
+          @if (hasError('lastName')) {
+          <div class="text-danger small">Last name is required.</div>
+          }
+          @for (message of fieldErrors('lastName'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input class="form-control" type="email" formControlName="email" />
+          @if (hasError('email')) {
+          <div class="text-danger small">Valid email is required.</div>
+          }
+          @for (message of fieldErrors('email'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Hire Date</label>
+          <input class="form-control" type="date" formControlName="hireDate" />
+          @if (hasError('hireDate')) {
+          <div class="text-danger small">Hire date is required.</div>
+          }
+          @for (message of fieldErrors('hireDate'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Salary</label>
+          <input class="form-control" type="number" formControlName="salary" />
+          @if (hasError('salary')) {
+          <div class="text-danger small">Salary must be 0 or more.</div>
+          }
+          @for (message of fieldErrors('salary'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
+        </div>
+
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check">
+            <input id="isActive" class="form-check-input" type="checkbox" formControlName="isActive" />
+            <label class="form-check-label" for="isActive">
+              Active
+            </label>
           </div>
         </div>
 
-        <hr />
-
-        <div class="d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
-            Cancel
-          </button>
-
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            {{ saving() ? 'Saving...' : 'Save' }}
-          </button>
+        <div class="col-md-6">
+          <label class="form-label">Modified By</label>
+          <input class="form-control" type="text" formControlName="modifiedBy" />
+          @if (hasError('modifiedBy')) {
+          <div class="text-danger small">Modified by is required.</div>
+          }
+          @for (message of fieldErrors('modifiedBy'); track message) {
+          <div class="text-danger small mt-1">{{ message }}</div>
+          }
         </div>
-      </form>
-    </div>
+      </div>
+
+      <hr />
+
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+          Cancel
+        </button>
+
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+    </form>
   </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-body">
+    <h2 class="h5 mb-3">Documents</h2>
+
+    <div class="row g-2 align-items-end mb-3">
+      <div class="col-sm-3">
+        <label class="form-label">Type</label>
+        <select class="form-select" [value]="docType()" (change)="docType.set($any($event.target).value)">
+          <option value="Contract">Contract</option>
+          <option value="IDCard">ID Card</option>
+          <option value="Resume">Resume</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="col">
+        <label class="form-label">File</label>
+        <input type="file" class="form-control" (change)="onDocumentSelected($event)" [disabled]="uploadingDoc()" />
+      </div>
+      @if (uploadingDoc()) {
+      <div class="col-auto"><span class="text-muted small">Uploading...</span></div>
+      }
+    </div>
+
+    @if (docMessage()) {
+    <div class="text-danger small mb-2">{{ docMessage() }}</div>
+    }
+
+    @if (documents().length === 0) {
+    <div class="text-muted">No documents.</div>
+    } @else {
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Uploaded</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (doc of documents(); track doc.id) {
+        <tr>
+          <td>{{ doc.fileName }}</td>
+          <td>{{ doc.documentType }}</td>
+          <td>{{ (doc.sizeBytes / 1024) | number:'1.0-0' }} KB</td>
+          <td>{{ doc.uploadedAt | date:'short' }}</td>
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-primary me-1"
+              (click)="downloadDocument(doc)">Download</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteDocument(doc)">Delete</button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+  </div>
+</div>
 }
