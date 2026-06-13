@@ -121,6 +121,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    volumes:
+      - mxhrm-uploads:/app/App_Data/uploads
 
   web:
     image: ghcr.io/oconneil/mxhrm-web:${IMAGE_TAG:-latest}
@@ -157,3 +159,4 @@ volumes:
   redis-data:
   sqlserver-data:
   sqlserver-backups:
+  mxhrm-uploads:
