@@ -13,6 +13,7 @@ using MXHRM.Infrastructure.Common.Grid;
 using MXHRM.Application.Common.Grid;
 using MXHRM.Api.Common;
 using MXHRM.Api.Authorization;
+using Microsoft.Extensions.Options;
 
 namespace MXHRM.Api.Controllers;
 
@@ -25,18 +26,21 @@ public class EmployeesController : BaseApiController
     private readonly AppDbContext _db;
     private readonly IAuthorizationService _authorizationService;
     private readonly IEmployeeFileService _employeeFileService;
+    private readonly FileUploadOptions _fileUploadOptions;
 
     public EmployeesController(
         IEmployeeService employeeService,
         AppDbContext db,
         IAuthorizationService authorizationService,
-        IEmployeeFileService employeeFileService
+        IEmployeeFileService employeeFileService,
+        IOptions<FileUploadOptions> fileUploadOptions
         )
     {
         _employeeService = employeeService;
         _db = db;
         _authorizationService = authorizationService;
         _employeeFileService = employeeFileService;
+        _fileUploadOptions = fileUploadOptions.Value;
     }
 
     [HttpGet]
@@ -175,7 +179,7 @@ public class EmployeesController : BaseApiController
 
     [HttpPost("{companyId}/{employeeId}/photo")]
     [Authorize(Policy = Permissions.Employee.Update)]
-    [RequestSizeLimit(3 * 1024 * 1024)]
+    [RequestSizeLimitFromConfig("Photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
@@ -186,7 +190,7 @@ public class EmployeesController : BaseApiController
         if (!sameCompany.Succeeded)
             return Forbid();
 
-        var error = FileUploadValidation.ValidateImage(file);
+        var error = FileUploadValidation.Validate(file, _fileUploadOptions.Photo);
         if (error is not null)
             return BadRequestError(error);
 
@@ -238,7 +242,7 @@ public class EmployeesController : BaseApiController
 
     [HttpPost("{companyId}/{employeeId}/documents")]
     [Authorize(Policy = Permissions.Employee.Update)]
-    [RequestSizeLimit(11 * 1024 * 1024)]
+    [RequestSizeLimitFromConfig("Document")]
     [ProducesResponseType(typeof(EmployeeDocumentResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
@@ -250,7 +254,7 @@ public class EmployeesController : BaseApiController
         if (!sameCompany.Succeeded)
             return Forbid();
 
-        var error = FileUploadValidation.ValidateDocument(file);
+        var error = FileUploadValidation.Validate(file, _fileUploadOptions.Document);
         if (error is not null)
             return BadRequestError(error);
 

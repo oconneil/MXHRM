@@ -333,6 +333,11 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+// Configure strongly-typed settings objects
+builder.Services.Configure<FileUploadOptions>(
+    builder.Configuration.GetSection(FileUploadOptions.SectionName)
+);
+
 var app = builder.Build();
 
 // Enable forwarded headers middleware to process X-Forwarded-For and X-Forwarded-Proto headers

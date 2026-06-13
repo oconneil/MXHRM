@@ -2470,13 +2470,36 @@ verify e2e จริง (curl): photo upload/download byte-perfect + validation 
 บทเรียน: "build ผ่าน ≠ โค้ดครบ" — endpoint ที่ลืมใส่ไม่ทำให้ build พัง เจอตอนเทสต์จริง (404) แล้ว grep=0
 ```
 
+### Phase 4 — Frontend photo upload UI + config-driven limits ✅
+
+```text
+Frontend (employee-edit): EmployeeService เพิ่ม uploadPhoto (FormData multipart),
+  getPhotoBlob (responseType:'blob' → auth-interceptor แนบ token; img src ตรงๆ ใช้ไม่ได้),
+  deletePhoto. Component ใช้ signals (photoUrl/uploadingPhoto/photoMessage) +
+  createObjectURL/revokeObjectURL (กัน memory leak, ngOnDestroy) + bypassSecurityTrustUrl.
+  client-side validate (type+size) = UX เฉยๆ. ng build ผ่าน.
+
+Config-driven size limits (Options pattern): FileUploadOptions/FileUploadRule (Api/Common) bind
+  section "FileUpload" {Photo,Document}{MaxBytes,AllowedExtensions}; Program.cs Configure<>.
+  FileUploadValidation รวมเป็น Validate(file, rule) เดียว (ตัด magic numbers + content-type check ออก).
+  Controller inject IOptions<FileUploadOptions>, ใช้ .Photo/.Document.
+  Request size limit ทำเป็น attribute ไม่ได้ (compile-time) → RequestSizeLimitFromConfigAttribute
+  (IResourceFilter, OnResourceExecuting รันก่อน binding) เซ็ต IHttpMaxRequestBodySizeFeature.MaxRequestBodySize
+  = rule.MaxBytes + 1MB. verify จริง: 10.5MB→400 validation, 12MB→ปฏิเสธ (body too large).
+บทเรียน: IOptions อ่าน config ครั้งเดียวตอน startup (ต้อง restart; IOptionsMonitor/Snapshot ถ้าจะ hot-reload).
+  attribute ต้อง compile-time const → config-driven request limit ต้องใช้ filter.
+KNOWN: request-too-large ตอนนี้ได้ 400 (ModelBinding แปลง BadHttpRequestException) ไม่ใช่ 413
+  → จะ map เป็น 413 ใน Global Error Handling (Project ถัดไป) เป็น use case จริง
+```
+
 ### follow-up
 
 ```text
 ยังไม่มี unit/integration test สำหรับ file upload (LocalFileStorage path-traversal, service)
 production: App_Data ต้องเป็น writable volume (prod container read_only + tmpfs) — ปรับ compose ตอน deploy
-frontend: ยังไม่มี UI อัปโหลดรูป/เอกสาร (NSwag regen + component)
+frontend: ยังไม่มี UI เอกสาร (list/upload/download/delete); photo UI เสร็จแล้ว
 hardening เพิ่มเติม: magic-byte sniffing, virus scan, signed URL สำหรับ download
+Global Error Handling: map BadHttpRequestException (body too large) → 413
 ```
 
 ---
