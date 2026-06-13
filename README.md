@@ -118,10 +118,54 @@ make prod-up
 
 - **HTTPS/TLS** ที่ edge ด้วย Caddy: เพิ่มไฟล์ override
   `docker compose -f docker-compose.prod.yml -f docker-compose.prod.tls.yml up -d`
+- **Database migration** (แอปไม่ auto-migrate) — สร้าง idempotent script แล้วรันเข้า SQL:
+
+  ```bash
+  dotnet ef migrations script --idempotent -o migrate.sql \
+    -p src/MXHRM.Infrastructure -s src/MXHRM.Api
+  docker run --rm --network container:mxhrm-sqlserver -v "$(pwd)/migrate.sql:/m.sql" \
+    mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd \
+    -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -d "$MXHRM_DB_NAME" -i /m.sql
+  ```
+
+- **ไฟล์อัปโหลด** (รูป/เอกสารพนักงาน) เก็บบน volume `mxhrm-uploads` (mount ที่ `api → /app/App_Data/uploads`)
+  → อยู่รอด redeploy; อย่าลืมรวมเข้าแผน backup
 - **Checklist ก่อน deploy จริง** → [DEPLOYMENT.md](DEPLOYMENT.md)
 - **Image tagging / registry / multi-platform** → [Docker.md](Docker.md)
 
 > CI/CD: push เข้า `main`/`master`/`develop` → GitHub Actions จะ build + test (`dotnet test MXHRM.slnx`) แล้ว push image ขึ้น GHCR อัตโนมัติ
+
+### Deploy บน IIS (Windows Server) — ทางเลือกแทน Docker
+
+> ใช้เมื่อองค์กรบังคับ Windows Server / IIS. Docker คือเส้นทางหลักที่ hardened ไว้แล้ว — IIS ต้องตั้ง Redis / TLS / background jobs เองเพิ่ม
+
+**เตรียม server:** ติดตั้ง **ASP.NET Core 10 Hosting Bundle** (ได้ .NET runtime + ASP.NET Core Module/ANCM) + เปิด IIS feature **WebSocket Protocol** (SignalR) และ **URL Rewrite** (Angular SPA)
+
+```bash
+# 1) Publish API (ทำบน Mac/Linux ได้) — ได้ web.config มาด้วยอัตโนมัติ
+dotnet publish src/MXHRM.Api/MXHRM.Api.csproj -c Release -o ./publish/api
+#    เพิ่ม --self-contained -r win-x64 ถ้าไม่อยากพึ่ง runtime บนเครื่อง server
+
+# 2) Build frontend → static files
+cd client/mxhrm-web && npm ci && npm run build   # output: dist/mxhrm-web/browser
+```
+
+ตั้งค่าบน IIS:
+
+- **App Pool** ของ API: `.NET CLR Version = "No Managed Code"` (โค้ดรันผ่าน ANCM ไม่ใช่ .NET Framework)
+- **Site** ของ API: ชี้ physical path ไปโฟลเดอร์ `publish/api`
+- ตั้ง env `ASPNETCORE_ENVIRONMENT=Production` ใน `web.config` (`<environmentVariables>`) + ใส่ connection string / `Jwt:SecretKey` / `Redis:ConnectionString` ผ่าน `appsettings.Production.json` หรือ env (อย่า commit secret)
+- **Frontend**: สร้าง IIS site แยกชี้ไป `dist/mxhrm-web/browser` + ใส่ URL Rewrite ให้ทุก route ตกไป `index.html` (กัน 404 เวลา refresh) + ชี้ `apiBaseUrl` (`environment.prod.ts`) ไป API
+- รัน migration: `dotnet ef migrations script --idempotent` แล้ว apply ที่ SQL Server
+
+ข้อควรระวังเฉพาะ project นี้บน IIS:
+
+| เรื่อง | ต้องทำ |
+|---|---|
+| **File upload** | ให้สิทธิ์ Write โฟลเดอร์ `App_Data/uploads` แก่ `IIS AppPool\<pool>` และตั้ง `FileStorage:RootPath` เป็น path นอกโฟลเดอร์แอป (กันไฟล์หายตอน deploy ทับ) |
+| **Hangfire** (background jobs) | App Pool ตั้ง `Start Mode = AlwaysRunning`, `Idle Time-out = 0` — หรือแยก Hangfire worker เป็น Windows Service (`Hangfire:UseServer=false` ที่ web) |
+| **SignalR** (`/hubs/realtime`) | เปิด WebSocket Protocol feature ใน IIS |
+| **Redis** | ไม่มากับ Windows → ต้องมี Redis แยก แล้วชี้ `Redis:ConnectionString` |
 
 ## หมายเหตุ
 
